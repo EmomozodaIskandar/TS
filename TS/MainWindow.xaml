@@ -909,7 +909,25 @@
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
                         <StackPanel Grid.Row="0">
-                            <TextBox></TextBox>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon
+                                    Kind="Search"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Grid.Column="0"/>
+                                <TextBox Name="SearchTransactionTextBox"
+                                     Margin="10"
+                                     HorizontalAlignment="Left"
+                                     VerticalAlignment="Center"
+                                         Grid.Column="1"
+                                         materialDesign:HintAssist.Hint="Search"
+                                         TextChanged="SearchTransactionTextBox_TextChanged"
+                                     ></TextBox>
+                            </Grid>
                         </StackPanel>
                         <StackPanel Grid.Row="1">
                             <DataGrid
@@ -934,46 +952,59 @@
 
 
                                     <DataGridTextColumn
-				                        Binding="{Binding SENDERNAME}"
+                                        Binding="{Binding sendCode}"
+                                        IsReadOnly="True"
+                                        Header="SendCode"
+                                        />
+                                    <DataGridTextColumn
+				                        Binding="{Binding sendersFullName}"
                                         IsReadOnly="False"
                                         Header="Sneders name"
                                         />
                                     <DataGridTextColumn                      
-				                        Binding="{Binding SENDERSPHONE}"
+				                        Binding="{Binding sendersPhone}"
                                         IsReadOnly="False"
                                         Header="Senders phone"
                                         />
                                     <DataGridTextColumn                      
-				                        Binding="{Binding SENDERSADDRESS}"
+				                        Binding="{Binding sendersAddress}"
                                         IsReadOnly="False"
                                         Header="Senders address"
                                         />
                                     <DataGridTextColumn
-				                        Binding="{Binding RECIPIENTSNAME}"
+				                        Binding="{Binding recipientsFullName}"
                                         IsReadOnly="False"
                                         Header="Recipients name"
                                         />
                                     <DataGridTextColumn
-				                        Binding="{Binding RECIPIENTSPHONE}"
+				                        Binding="{Binding recipientsPhone}"
                                         IsReadOnly="False"
                                         Header="Recipients Phone"
                                         />
                                     <DataGridTextColumn                      
-				                        Binding="{Binding RECIPIENTSADDRESS}"
+				                        Binding="{Binding recipientsAddress}"
                                         IsReadOnly="False"
                                         Header="Recipients address"
                                         />
                                     <DataGridTextColumn
-				                        Binding="{Binding PRODUCTSWEIGHT}"
+				                        Binding="{Binding productsWeight}"
                                         IsReadOnly="False"
                                         Header="Products name"
                                         />
-                                    <DataGridTextColumn
-				                        Binding="{Binding PRODUCTSTYPE}"
-                                        IsReadOnly="False"
-                                        Header="Products type"
-                                        />
-
+                                    <DataGridTemplateColumn>
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel >
+                                                    <Button
+                                                        Click="IsSendedButtonClick"
+                                                        Content="{Binding sendStatus}"
+                                                        >
+                                                        
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <DataGridTemplateColumn >
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -981,12 +1012,13 @@
                                                     Click="DeleteTransactionClick" 
                                                     HorizontalAlignment="Center" 
                                                     VerticalAlignment="Center"
+                                                    Width="35" Height="35"
+                                                    Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
                                                     >
-                                                    <StackPanel>
-                                                        <materialDesign:PackIcon 
+
+                                                    <materialDesign:PackIcon 
                                                         Kind="Delete" 
                                                         />
-                                                    </StackPanel>
 
                                                 </Button>
 

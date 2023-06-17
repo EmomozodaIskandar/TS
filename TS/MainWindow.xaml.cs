@@ -18,6 +18,7 @@ using System.Data.SQLite;
 using System.Configuration;
 using TS.Classes;
 using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
+using System.Globalization;
 
 namespace TS
 {
@@ -32,6 +33,7 @@ namespace TS
         List<CitiesClass> MRCityNames = new List<CitiesClass>();
         List<CitiesClass> DECityNames = new List<CitiesClass>();
         List<TarifClass> tarifClassList = new List<TarifClass>();
+        string? sendCode;
         int SenderId;
 
         #endregion
@@ -44,7 +46,8 @@ namespace TS
                 m_dbConnection = new SQLiteConnection(ConfigurationManager.ConnectionStrings["connection"].ConnectionString);
                 m_dbConnection.Open();
                 DatumTextBlock.Text = "Datum: " + System.DateTime.Now.ToShortDateString();
-                SendungsnummerTextBox.Text = System.DateTime.Now.Month.ToString(); 
+                Time();
+                
             }
             catch(Exception ex)
             {
@@ -52,7 +55,31 @@ namespace TS
             }
             
         }
-
+        private void Time()
+        {
+            try
+            {
+                System.Windows.Threading.DispatcherTimer dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
+                dispatcherTimer.Tick += new EventHandler(dispatcherTimer_Tick);
+                dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
+                dispatcherTimer.Start();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+        private void dispatcherTimer_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                SendungsnummerTextBox.Text = DateTime.Now.ToString("yyyy MM dd HH mm ss").Replace(" ", string.Empty);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
         private void PreviewTextInput1(object sender, TextCompositionEventArgs e)
         {
             Regex regex = new Regex("[^0-9]+");
@@ -104,7 +131,6 @@ namespace TS
 
                         //Insert into Products
 
-                        TransactionList();
 
                         ProductsList.Add
                         (
@@ -117,7 +143,6 @@ namespace TS
 
                         }
                         ) ;
-                        AddProducts(ProductsList[0]);
                         MessageBox.Show("Added!!");
                         dg_Products.ItemsSource = ProductsList;
                         dg_Products.Items.Refresh();
@@ -173,12 +198,13 @@ namespace TS
                 {
                     SQLiteCommand command = new SQLiteCommand(connection);
 
-                    command.CommandText = "INSERT INTO Products(Weight,Type, Sender_id, Recipient_id) Values(@param1, @param2, @param3, @param4)";
+                    command.CommandText = "INSERT INTO Products(Weight,Type, Sender_id, Recipient_id, Send_Code) Values(@param1, @param2, @param3, @param4, @param5)";
                     command.CommandType = CommandType.Text;
                     command.Parameters.Add(new SQLiteParameter("@param1", products.Weight));
                     command.Parameters.Add(new SQLiteParameter("@param2", products.Describe));
                     command.Parameters.Add(new SQLiteParameter("@param3", products.SenderId));
                     command.Parameters.Add(new SQLiteParameter("@param4", products.SenderId));
+                    command.Parameters.Add(new SQLiteParameter("@param5", sendCode));
                     command.ExecuteNonQuery();
                 }
             }
@@ -202,16 +228,23 @@ namespace TS
                 using(SQLiteConnection Connection = new SQLiteConnection(MainWindow.m_dbConnection)) 
                 {
                     SQLiteCommand command = new SQLiteCommand(Connection);
-                    command.CommandText = @"SELECT
-                                            PRODUCTS.ID AS ID,
-                                            (SELECT SENDERS.FirstName || ' ' || SENDERS.LastName FROM SENDERS WHERE SENDERS.id = PRODUCTS.Sender_Id) AS SENDERNAME, 
-                                            (SELECT SENDERS.Phone FROM SENDERS WHERE SENDERS.id = PRODUCTS.Sender_Id)AS SENDERSPHONE,
-                                            (Select (Select City from Addresses where id = SENDERS.Address_Id )as Address from Senders where id = Products.Sender_Id )AS SENDERSADDRESS,
-                                            (SELECT RECIPIENTS.FirstName || ' ' || RECIPIENTS.LastName FROM RECIPIENTS WHERE RECIPIENTS.id = PRODUCTS.Recipient_Id) AS RECIPIENTSNAME,
-                                            (SELECT RECIPIENTS.Phone FROM RECIPIENTS WHERE RECIPIENTS.id = PRODUCTS.Recipient_Id)AS RECIPIENTSPHONE,
-                                            (Select (Select City from Addresses where id = Recipients.Address_Id )as Address from Recipients where id = Products.Recipient_Id )AS RECIPIENTSADDRESS,
-                                            PRODUCTS.Type AS PRODUCTSTYPE, 
-                                            PRODUCTS.Weight AS PRODUCTSWEIGHT FROM PRODUCTS";
+                    command.CommandText = @"SELECT 
+    SEND_CODE AS sendCode,
+    SUM(WEIGHT) as productsWeight,
+    (Select Senders.FirstName || ' ' || Senders.LastName from senders where id = products.Sender_Id) as sendersFullName, 
+    (Select recipients.FirstName || ' ' || recipients.LastName from recipients where id = products.Recipient_Id) as recipientsFullName,
+    (Select (Select Addresses.City || ',' || Addresses.Country from addresses where id = senders.Address_Id ) from Senders where id = products.Sender_Id) as sendersAddress,
+    (Select (Select Addresses.City || ',' || Addresses.Country from addresses where id = recipients.Address_Id ) from recipients where id = products.Recipient_Id) as recipientsAddress,
+(Select senders.Phone from senders where id = products.Sender_Id) as sendersPhone,
+    (Select recipients.Phone from recipients where id = products.Recipient_Id) as recipientsPhone,
+    (case when products.isSended == 0 then ""Sent"" else ""Delivered"" end) as sendStatus
+    
+     
+FROM 
+    PRODUCTS
+GROUP BY 
+    SEND_CODE;
+";
                     command.CommandType= CommandType.Text;
 
                     DataSet dataSet = new DataSet();
@@ -234,52 +267,18 @@ namespace TS
                 if ((MessageBox.Show("Are you sure!!", "Confirming", MessageBoxButton.YesNo)) == MessageBoxResult.Yes)
                 {
                     var row = dg_transactions.SelectedItems[0] as DataRowView;
-                    int id = Convert.ToInt16(row["Id"]);
+                    string sendCode = Convert.ToString(row["sendCode"]);
                     using (SQLiteConnection connection = new SQLiteConnection(MainWindow.m_dbConnection))
                     {
-
                         SQLiteCommand command = new SQLiteCommand(connection);
-                        command.CommandText= "Select count(Sender_id) from products where Sender_id = (Select Sender_id from Products where id = @param1)";
+                        command.CommandText = "Delete from products where send_code = @param1";
                         command.CommandType= CommandType.Text;
-                        command.Parameters.Add(new SQLiteParameter("@param1", id));
-                        int CountOfSenderId = Convert.ToInt16(command.ExecuteScalar());
-                        command.Parameters.Clear();
-                        if (CountOfSenderId>1)
-                        {
-                            command.CommandText = "DELETE FROM PRODUCTS WHERE ID =  @param1;";
-                            command.CommandType= CommandType.Text;
-                            command.Parameters.Add(new SQLiteParameter("@param1", id));
-                            command.ExecuteScalar();
-                            command.Parameters.Clear();
-                            MessageBox.Show("Deleted!!");
-                            TransactionList();
-                        }
-                        else
-                        {
-                            command.CommandText = "Select Sender_id from Products where products.id=@param1;";
-                            command.CommandType= CommandType.Text;
-                            command.Parameters.Add(new SQLiteParameter("@param1", id));
-                            SenderId = Convert.ToInt16(command.ExecuteScalar());
-                            command.Parameters.Clear();
-                            command.CommandText = "DELETE FROM PRODUCTS WHERE ID =  @param1;";
-                            command.CommandType = CommandType.Text;
-                            command.Parameters.Add(new SQLiteParameter("@param1", id));
-                            command.ExecuteNonQuery();
-                            command.Parameters.Clear();
-                            command.CommandText = "DELETE FROM Senders WHERE ID =  @param1;";
-                            command.CommandType = CommandType.Text;
-                            command.Parameters.Add(new SQLiteParameter("@param1", SenderId));
-                            command.ExecuteNonQuery();
-                            command.Parameters.Clear();
-                            command.CommandText = "DELETE FROM RECIPIENTS WHERE ID =  @param1;";
-                            command.CommandType = CommandType.Text;
-                            command.Parameters.Add(new SQLiteParameter("@param1", SenderId));
-                            command.ExecuteNonQuery();
-                            command.Parameters.Clear();
-                            MessageBox.Show("Deleted!!");
-                            TransactionList();
+                        command.Parameters.Add(new SQLiteParameter("@param1", sendCode));
+                        command.ExecuteScalar();
+                        MessageBox.Show("Deleted!!");
+                        TransactionList();
 
-                        }
+                        
                     }
                 }
             }
@@ -324,13 +323,16 @@ namespace TS
         {
             try
             {
+                sendCode = SendungsnummerTextBox.Text;
                 using(SQLiteConnection connection = new SQLiteConnection(MainWindow.m_dbConnection))
                 {
                     SQLiteCommand command = new SQLiteCommand(connection);
+
                     for(int i=0; i<ProductsList.Count; i++) 
                     {
                         AddProducts(ProductsList[i]);
                     }
+                    TransactionList();
                     if(PaidInGermanyTextBlock.Text == string.Empty)
                     {
                         PaidInGermanyTextBlock.Text = "0";
@@ -752,6 +754,84 @@ namespace TS
             {
                 MessageBox.Show(ex.Message, "error"); 
             }
+        }
+
+        
+
+        private void IsSendedButtonClick(object sender, RoutedEventArgs e)
+        {
+            var row = dg_transactions.SelectedItems[0] as DataRowView;
+            string? sendCode = row["sendCode"].ToString();
+            using(SQLiteConnection connection = new SQLiteConnection(m_dbConnection))
+            {
+                SQLiteCommand cmd = new SQLiteCommand(connection);
+                cmd.CommandText = "Select isSended from products where send_code = @param1;";
+                cmd.CommandType = CommandType.Text;
+                cmd.Parameters.Add(new SQLiteParameter("@param1", sendCode));
+                bool sendStatus = !Convert.ToBoolean(cmd.ExecuteScalar());
+                
+                cmd.CommandText = "UPDATE products set isSended = @param2 where Send_Code = @param1;";
+                cmd.CommandType = CommandType.Text;
+                cmd.Parameters.Add(new SQLiteParameter("@param1", sendCode));
+                cmd.Parameters.Add(new SQLiteParameter("@param2", sendStatus));
+                cmd.ExecuteNonQuery();
+                TransactionList();
+                cmd.Parameters.Clear();
+            }
+        }
+
+        private void SearchTransactionTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            try
+            {
+                int pos = -1;
+                string? typedText = SearchTransactionTextBox.Text.Trim().ToLower();
+                if (!string.IsNullOrEmpty(typedText))
+                {
+                    for(int i = 0; i < dg_transactions.Items.Count; i++)
+                    {
+                        DataRowView row = dg_transactions.Items[i] as DataRowView;
+                        string? SendersFullName = row["sendersFullName"].ToString().ToLower();
+                        string? RecipientsFullName = row["recipientsFullName"].ToString().ToLower();
+                        if(SendersFullName.StartsWith(typedText))
+                        {
+                            object item = dg_transactions.Items[i];
+                            dg_transactions.SelectedItem = item;
+                            dg_transactions.ScrollIntoView(item);
+                            pos = dg_transactions.SelectedIndex;
+                            SearchTransactionTextBox.Background = new SolidColorBrush(Colors.White);
+                            break;
+                        }
+                        else if (RecipientsFullName.StartsWith(typedText))
+                        {
+                            object item = dg_transactions.Items[i];
+                            dg_transactions.SelectedItem = item;
+                            dg_transactions.ScrollIntoView(item);
+                            pos = dg_transactions.SelectedIndex;
+                            SearchTransactionTextBox.Background = new SolidColorBrush(Colors.White);
+                            break;
+                        }
+                        else
+                        {
+                            SearchTransactionTextBox.Background = new SolidColorBrush(Colors.HotPink);
+                        }
+                    }
+                }
+                else
+                {
+                    SearchTransactionTextBox.Background = new SolidColorBrush ((Colors.White) );
+                    dg_transactions.SelectedIndex = -1;
+                }
+                if(pos == -1 && !string.IsNullOrEmpty(typedText))
+                {
+                    SearchTransactionTextBox.Background = new SolidColorBrush (Colors.HotPink);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+            
         }
     }
     
