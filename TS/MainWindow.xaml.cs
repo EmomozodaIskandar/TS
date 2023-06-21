@@ -1,31 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Text.RegularExpressions;
 using System.Data;
 using System.Data.SQLite;
 using System.Configuration;
 using TS.Classes;
-using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
-using System.Globalization;
+using Microsoft.Office.Interop.Excel;
 
 namespace TS
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : System.Windows.Window
     {
         #region Declaration
         public static SQLiteConnection? m_dbConnection;
@@ -98,89 +89,90 @@ namespace TS
                     MessageBox.Show("All fields must be filled!!");
                 }
                 else
-                { 
-                    using (SQLiteConnection Connection = new SQLiteConnection(MainWindow.m_dbConnection))
+                {
+                    if (TarifCmb.SelectedIndex < 0)
+                        MessageBox.Show("Select tarif for products please !!");
+                    else
                     {
-                        SQLiteCommand command = new SQLiteCommand(Connection);
 
-                        //Insert into Senders
-                        command.CommandText = "INSERT INTO SENDERS(FirstName,LastName,Phone,Address_Id) VALUES(@PARAM1, @PARAM2, @PARAM3, @PARAM4)";
-                        command.CommandType = CommandType.Text;
-                        command.Parameters.Add(new SQLiteParameter("@param1", SenderFirstNameTextBox.Text.Trim()));
-                        command.Parameters.Add(new SQLiteParameter("@param2", SenderLastNameTextBox.Text.Trim()));
-                        command.Parameters.Add(new SQLiteParameter("@param3", SenderPhoneTextBox.Text.Trim()));
-                        command.Parameters.Add(new SQLiteParameter("@param4", SenderCitiesComboBox.SelectedValue));
-                        command.ExecuteNonQuery();
-
-
-                        //Insert into Recipients
-                        command.CommandText = "INSERT INTO Recipients(FirstName,LastName,Phone,Address_Id) VALUES(@PARAM1, @PARAM2, @PARAM3, @PARAM4)";
-                        command.CommandType = CommandType.Text;
-                        command.Parameters.Add(new SQLiteParameter("@param1", RecipientFirstNameTextBox.Text.Trim()));
-                        command.Parameters.Add(new SQLiteParameter("@param2", RecipientLastNameTextBox.Text.Trim()));
-                        command.Parameters.Add(new SQLiteParameter("@param3", RecipientPhoneTextBox.Text.Trim()));
-                        command.Parameters.Add(new SQLiteParameter("@param4", RecipientCitiesComboBox.SelectedValue));
-                        command.ExecuteNonQuery();
-
-                        //Select SenderId
-                        command.CommandText = "SELECT last_insert_rowid()";
-                        command.CommandType = CommandType.Text;
-
-                        SenderId = Convert.ToInt32(command.ExecuteScalar());
-                        
-
-                        //Insert into Products
-
-
-                        ProductsList.Add
-                        (
-                        new Products
+                        using (SQLiteConnection Connection = new SQLiteConnection(MainWindow.m_dbConnection))
                         {
-                            Weight = Convert.ToDecimal(ProductWeigthTextBox.Text.Trim()),
-                            Describe = ProductDescribeTextBox.Text.Trim(),
-                            SenderId = SenderId,
-                            RecipientId = SenderId,
+                            SQLiteCommand command = new SQLiteCommand(Connection);
 
+                            //Insert into Senders
+                            command.CommandText = "INSERT INTO SENDERS(FirstName,LastName,Phone,Address_Id) VALUES(@PARAM1, @PARAM2, @PARAM3, @PARAM4)";
+                            command.CommandType = CommandType.Text;
+                            command.Parameters.Add(new SQLiteParameter("@param1", SenderFirstNameTextBox.Text.Trim()));
+                            command.Parameters.Add(new SQLiteParameter("@param2", SenderLastNameTextBox.Text.Trim()));
+                            command.Parameters.Add(new SQLiteParameter("@param3", SenderPhoneTextBox.Text.Trim()));
+                            command.Parameters.Add(new SQLiteParameter("@param4", SenderCitiesComboBox.SelectedValue));
+                            command.ExecuteNonQuery();
+
+
+                            //Insert into Recipients
+                            command.CommandText = "INSERT INTO Recipients(FirstName,LastName,Phone,Address_Id) VALUES(@PARAM1, @PARAM2, @PARAM3, @PARAM4)";
+                            command.CommandType = CommandType.Text;
+                            command.Parameters.Add(new SQLiteParameter("@param1", RecipientFirstNameTextBox.Text.Trim()));
+                            command.Parameters.Add(new SQLiteParameter("@param2", RecipientLastNameTextBox.Text.Trim()));
+                            command.Parameters.Add(new SQLiteParameter("@param3", RecipientPhoneTextBox.Text.Trim()));
+                            command.Parameters.Add(new SQLiteParameter("@param4", RecipientCitiesComboBox.SelectedValue));
+                            command.ExecuteNonQuery();
+
+                            //Select SenderId
+                            command.CommandText = "SELECT last_insert_rowid()";
+                            command.CommandType = CommandType.Text;
+
+                            SenderId = Convert.ToInt32(command.ExecuteScalar());
+
+
+                            //Insert into Products
+
+
+                            ProductsList.Add
+                            (
+                            new Products
+                            {
+                                Weight = Convert.ToDecimal(ProductWeigthTextBox.Text.Trim()),
+                                Describe = ProductDescribeTextBox.Text.Trim(),
+                                SenderId = SenderId,
+                                RecipientId = SenderId,
+
+                            }
+                            );
+                            MessageBox.Show("Added!!");
+                            dg_Products.ItemsSource = ProductsList;
+                            dg_Products.Items.Refresh();
+                            AddTransactionButton.IsEnabled = false;
+                            AddTransactionButton.Visibility = Visibility.Hidden;
+                            AddAnotherProductButton.IsEnabled = true;
+                            AddAnotherProductButton.Visibility = Visibility.Visible;
+                            AddAllAddedProductsButton.IsEnabled = true;
+                            AddAllAddedProductsButton.Visibility = Visibility.Visible;
+
+                            TotalWeightTextBlock.Visibility = Visibility.Visible;
+                            TotalWeightTextBlock.Text = ProductsList[0].Weight.ToString();
+
+                            CountOfProductsTextBlock.Visibility = Visibility.Visible;
+                            CountOfProductsTextBlock.Text = "1";
+
+
+                            TotalCostTextBlock.Visibility = Visibility.Visible;
+                            TotalCostTextBlock.Text = Convert.ToString(Convert.ToDouble(TotalWeightTextBlock.Text) * Convert.ToDouble(TarifCmb.SelectedValue));
+
+
+                            SenderFirstNameTextBox.Text = string.Empty;
+                            SenderLastNameTextBox.Text = string.Empty;
+                            SenderPhoneTextBox.Text = string.Empty;
+                            SenderCitiesComboBox.SelectedIndex = -1;
+
+                            RecipientFirstNameTextBox.Text = string.Empty;
+                            RecipientLastNameTextBox.Text = string.Empty;
+                            RecipientPhoneTextBox.Text = string.Empty;
+                            RecipientCitiesComboBox.SelectedIndex = -1;
+
+                            ProductDescribeTextBox.Text = string.Empty;
+                            ProductWeigthTextBox.Text = string.Empty;
                         }
-                        ) ;
-                        MessageBox.Show("Added!!");
-                        dg_Products.ItemsSource = ProductsList;
-                        dg_Products.Items.Refresh();
-                        AddTransactionButton.IsEnabled = false;
-                        AddTransactionButton.Visibility = Visibility.Hidden;
-                        AddAnotherProductButton.IsEnabled = true;
-                        AddAnotherProductButton.Visibility = Visibility.Visible;
-                        AddAllAddedProductsButton.IsEnabled = true;
-                        AddAllAddedProductsButton.Visibility = Visibility.Visible;
-
-                        TotalWeightTextBlock.Visibility = Visibility.Visible;
-                        TotalWeightTextBlock.Text = ProductsList[0].Weight.ToString();
-
-                        CountOfProductsTextBlock.Visibility = Visibility.Visible;
-                        CountOfProductsTextBlock.Text = "1"; 
-
-
-                        TotalCostTextBlock.Visibility = Visibility.Visible;
-                        TotalCostTextBlock.Text = Convert.ToString(Convert.ToDouble(TotalWeightTextBlock.Text)*Convert.ToDouble(TarifCmb.SelectedValue));
-
-                        /*DataSet dataSet = new DataSet();
-                        SQLiteDataAdapter dataAdapter = new SQLiteDataAdapter(command);
-                        dataAdapter.Fill(dataSet, "Balance");
-                        dg_balance.DataContext = dataSet;
-                        dg_balance.Items.Refresh();*/
-
-                        SenderFirstNameTextBox.Text = string.Empty;
-                        SenderLastNameTextBox.Text = string.Empty;
-                        SenderPhoneTextBox.Text = string.Empty;
-                        SenderCitiesComboBox.SelectedIndex = -1;
-
-                        RecipientFirstNameTextBox.Text = string.Empty;
-                        RecipientLastNameTextBox.Text = string.Empty;
-                        RecipientPhoneTextBox.Text = string.Empty;
-                        RecipientCitiesComboBox.SelectedIndex = -1;
-
-                        ProductDescribeTextBox.Text = string.Empty;
-                        ProductWeigthTextBox .Text = string.Empty;
                     }
                 }
             }
@@ -832,6 +824,198 @@ GROUP BY
                 MessageBox.Show(ex.Message, "error");
             }
             
+        }
+        private void UsersList()
+        {
+            try
+            {
+                using(SQLiteConnection connection = new SQLiteConnection(m_dbConnection))
+                {
+                    SQLiteCommand cmd = new SQLiteCommand(connection);
+                    cmd.CommandText = "Select id as Id, firstname || ' ' || lastname as UserFullname, username as username from Users;"; 
+                    cmd.CommandType = CommandType.Text;
+
+                    DataSet dataSet = new DataSet();
+                    SQLiteDataAdapter adapter = new SQLiteDataAdapter(cmd);
+                    adapter.Fill(dataSet, "Userlist");
+                    dg_users.DataContext = dataSet;
+                    dg_users.Items.Refresh();
+                }
+            }
+            catch(Exception ex) 
+            {
+                MessageBox.Show (ex.Message, "error");
+            }
+
+        }
+
+        private void DeleteUserButtonClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (dg_users.Items.Count > 1)
+                {
+                    DataRowView row = dg_users.SelectedItems[0] as DataRowView;
+                    int id = Convert.ToInt16(row["Id"]);
+                    if(MessageBox.Show("Are you sure?!", "Confirming", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                    {
+                        using (SQLiteConnection connection = new SQLiteConnection(m_dbConnection))
+                        {
+                            SQLiteCommand cmd = new SQLiteCommand(connection);
+                            cmd.CommandText = "Delete from users where id=@param1";
+                            cmd.Parameters.Add(new SQLiteParameter("@param1", id));
+                            cmd.ExecuteNonQuery();
+                            MessageBox.Show("Deleted!!");
+                            UsersList();
+
+                        }
+                    }
+                    
+                }
+                else
+                {
+                    MessageBox.Show("You can't delete all users, because than nobody can enter to the programm!!");
+                }
+                
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show (ex.Message, "error");
+            }
+        }
+
+        private void UserAddButtonClick(object sender, RoutedEventArgs e)
+        {
+            if(UserPasswordTextBox.Password.Trim()!=string.Empty && UserLastnameTextBox.Text.Trim()!=string.Empty && UserFirstnameTextBox.Text.Trim()!=string.Empty && UserUsernameTextBox.Text.Trim()!=string.Empty)
+            {
+                try
+                {
+                    using (SQLiteConnection connection = new SQLiteConnection(m_dbConnection))
+                    {
+                        SQLiteCommand cmd = new SQLiteCommand(connection);
+                        cmd.CommandText = "insert into users(firstname, lastname, username, password) values(@param1, @param2, @param3, @param4);" ;
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.Add(new SQLiteParameter("@param1", UserFirstnameTextBox.Text.Trim()));
+                        cmd.Parameters.Add(new SQLiteParameter("@param2", UserLastnameTextBox.Text.Trim()));
+                        cmd.Parameters.Add(new SQLiteParameter("@param3", UserUsernameTextBox.Text.Trim()));
+                        cmd.Parameters.Add(new SQLiteParameter("@param4", UserPasswordTextBox.Password.Trim()));
+                        cmd.ExecuteNonQuery();
+                        MessageBox.Show("Added!!");
+                        UsersList();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "error");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Fill all fields please!!");
+            }
+            
+        }
+
+        private void AccountsTabLoaded(object sender, RoutedEventArgs e)
+        {
+            UsersList();
+        }
+
+        private void PrintAlltransactionsClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string template = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\AllTransactions.xlsx";
+                Microsoft.Office.Interop.Excel.Application application = new Microsoft.Office.Interop.Excel.Application();
+                Workbook workbook ;
+                _Worksheet worksheet ;
+                workbook = application.Workbooks.Open(template, 0, false, 5, "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t", false, false, 0, true, 1, 0);
+                worksheet = (Worksheet)workbook.ActiveSheet;
+                worksheet.Cells[1, 1] = "SendCode";
+                worksheet.Cells[1, 2] = "Senders Fullname";
+                worksheet.Cells[1, 3] = "Senders phone";
+                worksheet.Cells[1, 4] = "Senders address";
+                worksheet.Cells[1, 5] = "Recipients Fullname";
+                worksheet.Cells[1, 6] = "Recipients phone";
+                worksheet.Cells[1, 7] = "Recipients address";
+                worksheet.Cells[1, 8] = "Products weight";
+                worksheet.Cells[1, 9] = "Send status";
+                for(int i=0; i<dg_transactions.Items.Count; i++)
+                {
+                    DataRowView row = dg_transactions.Items[i] as DataRowView;
+                    worksheet.Cells[i + 2, 1] = row["sendCode"].ToString();
+                    worksheet.Cells[i + 2, 2] = row["sendersFullName"].ToString();
+                    worksheet.Cells[i + 2, 3] = row["sendersPhone"].ToString();
+                    worksheet.Cells[i + 2, 4] = row["sendersAddress"].ToString();
+                    worksheet.Cells[i + 2, 5] = row["recipientsFullName"].ToString();
+                    worksheet.Cells[i + 2, 6] = row["recipientsPhone"].ToString();
+                    worksheet.Cells[i + 2, 7] = row["recipientsAddress"].ToString();
+                    worksheet.Cells[i + 2, 8] = row["productsWeight"].ToString();
+                    worksheet.Cells[i + 2, 9] = row["sendStatus"].ToString();
+
+                }
+
+                application.Visible = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+
+        private void PrintTransactionClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string template = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\Transaction.xlsx";
+                Microsoft.Office.Interop.Excel.Application application = new Microsoft.Office.Interop.Excel.Application(); 
+                application.Visible = true;
+                Workbook workbook = application.Workbooks.Open(template, 0, true, 5, "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t", false, false, 0, true, 1, 0);
+                _Worksheet worksheet = (Worksheet)workbook.ActiveSheet;
+                DataRowView row = dg_transactions.SelectedItems[0] as DataRowView;
+                string sendCode = row["sendCode"].ToString();
+
+
+                worksheet.Cells[1, 1] = "SendCode";
+                worksheet.Cells[1, 2] = sendCode;
+                worksheet.Cells[2, 1] = "Senders Fullname";
+                worksheet.Cells[2, 2] = row["sendersFullName"].ToString();
+                worksheet.Cells[3, 1] = "Senders phone";
+                worksheet.Cells[3, 2] = row["sendersPhone"].ToString();
+                worksheet.Cells[4, 1] = "Senders address";
+                worksheet.Cells[4, 2] = row["sendersAddress"].ToString();
+                worksheet.Cells[5, 1] = "Recipients Fullname";
+                worksheet.Cells[5, 2] = row["recipientsFullName"].ToString();
+                worksheet.Cells[6, 1] = "Recipients phone";
+                worksheet.Cells[6, 2] = row["recipientsPhone"].ToString();
+                worksheet.Cells[7, 1] = "Recipients address";
+                worksheet.Cells[7, 2] = row["recipientsAddress"].ToString();
+
+                worksheet.Cells[8, 1] = "PRODUCTS";
+                int i = 9;
+                using (SQLiteConnection connection = new SQLiteConnection(m_dbConnection)) 
+                {
+                    SQLiteCommand cmd = new SQLiteCommand(connection);
+                    
+                    cmd.CommandText = "select products.Type as productDescribe, products.Weight as productWeight from products where products.Send_Code=@param1;";
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.Add(new SQLiteParameter("@param1", sendCode));
+                    SQLiteDataReader reader = cmd.ExecuteReader();
+                    if(reader.HasRows)
+                    {
+                        while(reader.Read())
+                        {
+                            worksheet.Cells[i, 1] = reader["productDescribe"].ToString() ;
+                            worksheet.Cells[i, 2] = reader["productWeight"].ToString();
+                            i++;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
         }
     }
     

@@ -25,6 +25,7 @@ namespace TS
         public Window1()
         {
             InitializeComponent();
+            UsernameTextBox.Focus();
             try
             {
                 m_dbConnection = new SQLiteConnection(ConfigurationManager.ConnectionStrings["connection"].ConnectionString);
@@ -89,6 +90,22 @@ namespace TS
         private void UserClickedCancelButtonClick(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        private void UsernameTextBoxKeyDownEvent(object sender, KeyEventArgs e)
+        {
+            if(e.Key == Key.Enter)
+            {
+                PasswordtextBox.Focus();
+            }
+        }
+
+        private void passwordkeydownevent(object sender, KeyEventArgs e)
+        {
+            if(e.Key == Key.Enter)
+            {
+                UserClickedOkButtonClick(sender, e);
+            }
         }
     }
 }

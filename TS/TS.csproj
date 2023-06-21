@@ -8,11 +8,26 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="AllTransactions.xlsx" />
     <None Remove="Firmalogo.png" />
+    <None Remove="Transaction.xlsx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="AllTransactions.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Transaction.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MaterialDesignThemes" Version="4.8.0" />
+    <PackageReference Include="Microsoft.Office.Interop.Excel" Version="15.0.4795.1001" />
+    <PackageReference Include="Microsoft.Office.Interop.Word" Version="15.0.4797.1004" />
+    <PackageReference Include="MicrosoftOfficeCore" Version="15.0.0" />
+    <PackageReference Include="Office" Version="12.0.0" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.117" />
   </ItemGroup>
 

@@ -137,14 +137,31 @@
                                                                     <ColumnDefinition Width="*"/>
                                                                     <ColumnDefinition Width="*"/>
                                                                 </Grid.ColumnDefinitions>
-                                                                <TextBox
+                                                                <StackPanel Margin="15"
+                                                                            Grid.Column="0"
+                                                                            VerticalAlignment="Center"
+                                                                            >
+                                                                    <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="auto"/>
+                                                                            <ColumnDefinition Width="auto"/>
+                                                                        </Grid.ColumnDefinitions>
+
+                                                                        <TextBox
                                                     x:Name="SenderFirstNameTextBox"
                                                     materialDesign:HintAssist.HelperText="Helper text longer than error"
                                                     materialDesign:HintAssist.Hint="First name"
-                                                    Margin="15"
-                                                    Grid.Column="0"
-                                                    VerticalAlignment="Center"
+                                                                        VerticalAlignment="Center"
+                                                                        HorizontalAlignment="Left"
+                                                                            Grid.Column="0"
                                                     />
+                                                                        <ComboBox
+                                                                            Grid.Column="1"
+                                                                            VerticalAlignment="Center"
+                                                                            HorizontalAlignment="Right"></ComboBox>
+                                                                    </Grid>
+                                                                </StackPanel>
+                                                      
                                                                 <TextBox
                                                     x:Name="SenderLastNameTextBox"
                                                     materialDesign:HintAssist.HelperText="Helper text longer than error"
@@ -989,8 +1006,40 @@
                                     <DataGridTextColumn
 				                        Binding="{Binding productsWeight}"
                                         IsReadOnly="False"
-                                        Header="Products name"
+                                        Header="Products weight"
                                         />
+                                    <DataGridTemplateColumn>
+                                        <DataGridTemplateColumn.Header>
+                                            <Button Click="PrintAlltransactionsClick">
+                                                <StackPanel>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="auto"/>
+                                                            <ColumnDefinition Width="auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <materialDesign:PackIcon Kind="Printer3d" Grid.Column="0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Print All" Grid.Column="1"/>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataGridTemplateColumn.Header>
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Click="PrintTransactionClick">
+                                                    <StackPanel>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="auto"/>
+                                                                <ColumnDefinition Width="auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <materialDesign:PackIcon Kind="Printer3d" Grid.Column="0" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="Print" Grid.Column="1"/>
+                                                        </Grid>
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <DataGridTemplateColumn>
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -1033,7 +1082,82 @@
                     </Grid>
                 </TabItem>
 
-
+                <TabItem Loaded="AccountsTabLoaded">
+                    <TabItem.Header>
+                        <StackPanel
+          Width="auto"
+          Height="auto">
+                            <materialDesign:PackIcon
+            Width="24"
+            Height="24"
+            HorizontalAlignment="Center"
+            Kind="Accounts" />
+                            <TextBlock
+            HorizontalAlignment="Center"
+            Text="Recent" />
+                        </StackPanel>
+                    </TabItem.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="100"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBox Name="UserFirstnameTextBox" Grid.Row="0" Grid.Column="0" materialDesign:HintAssist.Hint="Firstname" VerticalAlignment="Center" Margin="15"/>
+                        <TextBox Name="UserLastnameTextBox" Grid.Row="0" Grid.Column="1" materialDesign:HintAssist.Hint="Lastname" VerticalAlignment="Center" Margin="15"/>
+                        <TextBox Name="UserUsernameTextBox" Grid.Row="0" Grid.Column="2" materialDesign:HintAssist.Hint="Username" VerticalAlignment="Center" Margin="15"/>
+                        <PasswordBox Name="UserPasswordTextBox" Grid.Row="0" Grid.Column="3" materialDesign:HintAssist.Hint="Password" VerticalAlignment="Center" Margin="15"/>
+                        <Button Name="UserAddButton" Click="UserAddButtonClick" Grid.Row="0" Grid.Column="4" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="auto"/>
+                                        <ColumnDefinition Width="auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <materialDesign:PackIcon Kind="Add" Grid.Column="0"/>
+                                    <TextBlock Text="Add" Grid.Column="1"/>
+                                </Grid>
+                            </StackPanel>                            
+                        </Button>
+                        <DataGrid Name="dg_users" AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  CanUserReorderColumns="True"
+                                  ItemsSource="{Binding Userlist, Mode=TwoWay}"
+                                  Grid.Row="1"
+                                  Grid.ColumnSpan="5"
+                                  >
+                            <DataGrid.Columns>
+                                <DataGridTextColumn
+                                    Header="Fullname"
+                                    Binding="{Binding UserFullname}"
+                                    IsReadOnly="True"
+                                    Width="*"/>
+                                <DataGridTextColumn
+                                    Header="Username"
+                                    Binding="{Binding username}"
+                                    IsReadOnly="True"
+                                    Width="*"/>
+                                <DataGridTemplateColumn>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button  Click="DeleteUserButtonClick" Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}">
+                                                <materialDesign:PackIcon Kind="Delete"/>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
             </TabControl>
         </materialDesign:Card>
     </Grid>

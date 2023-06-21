@@ -29,9 +29,9 @@
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
                 <materialDesign:PackIcon Kind="User" Grid.Row="0" Grid.Column="0" Margin="5"/>
-                <TextBox Name="UsernameTextBox" Grid.Row="0" Grid.Column="1" Margin="5" materialDesign:HintAssist.Hint="Username"/>
+                <TextBox Name="UsernameTextBox" Grid.Row="0" Grid.Column="1" Margin="5" materialDesign:HintAssist.Hint="Username" PreviewKeyDown="UsernameTextBoxKeyDownEvent"/>
                 <materialDesign:PackIcon Kind="Password" Grid.Row="1" Grid.Column="0" Margin="5"/>
-                <PasswordBox Name="PasswordtextBox" Grid.Row="1" Grid.Column="1" materialDesign:HintAssist.Hint="Password" Margin="5"/>
+                <PasswordBox Name="PasswordtextBox" Grid.Row="1" Grid.Column="1" materialDesign:HintAssist.Hint="Password" Margin="5" PreviewKeyDown="passwordkeydownevent"/>
             </Grid>
         </StackPanel>
         <StackPanel Grid.Row="1" HorizontalAlignment="Center">
