@@ -24,11 +24,16 @@ namespace TS
         List<CitiesClass> MRCityNames = new List<CitiesClass>();
         List<CitiesClass> DECityNames = new List<CitiesClass>();
         List<TarifClass> tarifClassList = new List<TarifClass>();
+        List<Client> clientsList = new List<Client>();
+
+        List<Client>? Searchedclients = new List<Client>();
         string? sendCode;
         int SenderId;
+        int RecipientsId;
+        string Role;
 
         #endregion
-        public MainWindow()
+        public MainWindow( string role)
         {
             InitializeComponent();
 
@@ -36,14 +41,14 @@ namespace TS
             {
                 m_dbConnection = new SQLiteConnection(ConfigurationManager.ConnectionStrings["connection"].ConnectionString);
                 m_dbConnection.Open();
-                DatumTextBlock.Text = "Datum: " + System.DateTime.Now.ToShortDateString();
                 Time();
-                
+                Role = role;
             }
             catch(Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
+
             
         }
         private void Time()
@@ -64,7 +69,6 @@ namespace TS
         {
             try
             {
-                SendungsnummerTextBox.Text = DateTime.Now.ToString("yyyy MM dd HH mm ss").Replace(" ", string.Empty);
             }
             catch (Exception ex)
             {
@@ -77,140 +81,12 @@ namespace TS
             e.Handled = regex.IsMatch(e.Text);
         }
 
-        private void AddTransactionClick(object sender, RoutedEventArgs e)
-        {
-            ProductsList.Clear();
-            try
-            {
-                if ( SenderCitiesComboBox.SelectedIndex < 0  || SenderFirstNameTextBox.Text.Trim() == string.Empty || SenderLastNameTextBox.Text.Trim() == string.Empty || SenderPhoneTextBox.Text.Trim() == string.Empty
-                    || RecipientCitiesComboBox.SelectedIndex < 0 || RecipientFirstNameTextBox.Text.Trim() == string.Empty || RecipientLastNameTextBox.Text.Trim() == string.Empty
-                    || RecipientPhoneTextBox.Text.Trim() == string.Empty)
-                {
-                    MessageBox.Show("All fields must be filled!!");
-                }
-                else
-                {
-                    if (TarifCmb.SelectedIndex < 0)
-                        MessageBox.Show("Select tarif for products please !!");
-                    else
-                    {
-
-                        using (SQLiteConnection Connection = new SQLiteConnection(MainWindow.m_dbConnection))
-                        {
-                            SQLiteCommand command = new SQLiteCommand(Connection);
-
-                            //Insert into Senders
-                            command.CommandText = "INSERT INTO SENDERS(FirstName,LastName,Phone,Address_Id) VALUES(@PARAM1, @PARAM2, @PARAM3, @PARAM4)";
-                            command.CommandType = CommandType.Text;
-                            command.Parameters.Add(new SQLiteParameter("@param1", SenderFirstNameTextBox.Text.Trim()));
-                            command.Parameters.Add(new SQLiteParameter("@param2", SenderLastNameTextBox.Text.Trim()));
-                            command.Parameters.Add(new SQLiteParameter("@param3", SenderPhoneTextBox.Text.Trim()));
-                            command.Parameters.Add(new SQLiteParameter("@param4", SenderCitiesComboBox.SelectedValue));
-                            command.ExecuteNonQuery();
-
-
-                            //Insert into Recipients
-                            command.CommandText = "INSERT INTO Recipients(FirstName,LastName,Phone,Address_Id) VALUES(@PARAM1, @PARAM2, @PARAM3, @PARAM4)";
-                            command.CommandType = CommandType.Text;
-                            command.Parameters.Add(new SQLiteParameter("@param1", RecipientFirstNameTextBox.Text.Trim()));
-                            command.Parameters.Add(new SQLiteParameter("@param2", RecipientLastNameTextBox.Text.Trim()));
-                            command.Parameters.Add(new SQLiteParameter("@param3", RecipientPhoneTextBox.Text.Trim()));
-                            command.Parameters.Add(new SQLiteParameter("@param4", RecipientCitiesComboBox.SelectedValue));
-                            command.ExecuteNonQuery();
-
-                            //Select SenderId
-                            command.CommandText = "SELECT last_insert_rowid()";
-                            command.CommandType = CommandType.Text;
-
-                            SenderId = Convert.ToInt32(command.ExecuteScalar());
-
-
-                            //Insert into Products
-
-
-                            ProductsList.Add
-                            (
-                            new Products
-                            {
-                                Weight = Convert.ToDecimal(ProductWeigthTextBox.Text.Trim()),
-                                Describe = ProductDescribeTextBox.Text.Trim(),
-                                SenderId = SenderId,
-                                RecipientId = SenderId,
-
-                            }
-                            );
-                            MessageBox.Show("Added!!");
-                            dg_Products.ItemsSource = ProductsList;
-                            dg_Products.Items.Refresh();
-                            AddTransactionButton.IsEnabled = false;
-                            AddTransactionButton.Visibility = Visibility.Hidden;
-                            AddAnotherProductButton.IsEnabled = true;
-                            AddAnotherProductButton.Visibility = Visibility.Visible;
-                            AddAllAddedProductsButton.IsEnabled = true;
-                            AddAllAddedProductsButton.Visibility = Visibility.Visible;
-
-                            TotalWeightTextBlock.Visibility = Visibility.Visible;
-                            TotalWeightTextBlock.Text = ProductsList[0].Weight.ToString();
-
-                            CountOfProductsTextBlock.Visibility = Visibility.Visible;
-                            CountOfProductsTextBlock.Text = "1";
-
-
-                            TotalCostTextBlock.Visibility = Visibility.Visible;
-                            TotalCostTextBlock.Text = Convert.ToString(Convert.ToDouble(TotalWeightTextBlock.Text) * Convert.ToDouble(TarifCmb.SelectedValue));
-
-
-                            SenderFirstNameTextBox.Text = string.Empty;
-                            SenderLastNameTextBox.Text = string.Empty;
-                            SenderPhoneTextBox.Text = string.Empty;
-                            SenderCitiesComboBox.SelectedIndex = -1;
-
-                            RecipientFirstNameTextBox.Text = string.Empty;
-                            RecipientLastNameTextBox.Text = string.Empty;
-                            RecipientPhoneTextBox.Text = string.Empty;
-                            RecipientCitiesComboBox.SelectedIndex = -1;
-
-                            ProductDescribeTextBox.Text = string.Empty;
-                            ProductWeigthTextBox.Text = string.Empty;
-                        }
-                    }
-                }
-            }
-            catch(Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
         
-        private void AddProducts(Products products)
-        {
-            try
-            {
-                using(SQLiteConnection connection = new SQLiteConnection(MainWindow.m_dbConnection))
-                {
-                    SQLiteCommand command = new SQLiteCommand(connection);
-
-                    command.CommandText = "INSERT INTO Products(Weight,Type, Sender_id, Recipient_id, Send_Code) Values(@param1, @param2, @param3, @param4, @param5)";
-                    command.CommandType = CommandType.Text;
-                    command.Parameters.Add(new SQLiteParameter("@param1", products.Weight));
-                    command.Parameters.Add(new SQLiteParameter("@param2", products.Describe));
-                    command.Parameters.Add(new SQLiteParameter("@param3", products.SenderId));
-                    command.Parameters.Add(new SQLiteParameter("@param4", products.SenderId));
-                    command.Parameters.Add(new SQLiteParameter("@param5", sendCode));
-                    command.ExecuteNonQuery();
-                }
-            }
-            catch (Exception ex) 
-            { 
-                MessageBox.Show(ex.Message);
-            }
-        }
+        
 
         private void TransactionLoaded(object sender, RoutedEventArgs e)
         {
             TransactionList();
-            FillCityNamesList("MR", false);
-            FillCityNamesList("MR", true);
         }
         private void TransactionList() 
         {
@@ -223,12 +99,12 @@ namespace TS
                     command.CommandText = @"SELECT 
     SEND_CODE AS sendCode,
     SUM(WEIGHT) as productsWeight,
-    (Select Senders.FirstName || ' ' || Senders.LastName from senders where id = products.Sender_Id) as sendersFullName, 
-    (Select recipients.FirstName || ' ' || recipients.LastName from recipients where id = products.Recipient_Id) as recipientsFullName,
-    (Select (Select Addresses.City || ',' || Addresses.Country from addresses where id = senders.Address_Id ) from Senders where id = products.Sender_Id) as sendersAddress,
-    (Select (Select Addresses.City || ',' || Addresses.Country from addresses where id = recipients.Address_Id ) from recipients where id = products.Recipient_Id) as recipientsAddress,
-(Select senders.Phone from senders where id = products.Sender_Id) as sendersPhone,
-    (Select recipients.Phone from recipients where id = products.Recipient_Id) as recipientsPhone,
+    (Select clients.FirstName || ' ' || clients.LastName from clients where id = products.Sender_Id) as sendersFullName, 
+    (Select clients.FirstName || ' ' || clients.LastName from clients where id = products.Recipient_Id) as recipientsFullName,
+    (Select (Select Addresses.City || ',' || Addresses.Country from addresses where id = clients.Address_Id ) from clients where id = products.Sender_Id) as sendersAddress,
+    (Select (Select Addresses.City || ',' || Addresses.Country from addresses where id = clients.Address_Id ) from clients where id = products.Recipient_Id) as recipientsAddress,
+(Select clients.Phone from clients where id = products.Sender_Id) as sendersPhone,
+    (Select clients.Phone from clients where id = products.Recipient_Id) as recipientsPhone,
     (case when products.isSended == 0 then ""Sent"" else ""Delivered"" end) as sendStatus
     
      
@@ -280,95 +156,6 @@ GROUP BY
             }
         }
 
-        private void AddAnotherProductClick(object sender, RoutedEventArgs e)
-        {
-            if(ProductWeigthTextBox.Text.Trim()!=string.Empty && ProductDescribeTextBox.Text.Trim()!=string.Empty)
-            {
-
-                ProductsList.Add
-                    (
-                        new Products
-                        {
-                            Weight = Convert.ToDecimal(ProductWeigthTextBox.Text.Trim()),
-                            Describe = ProductDescribeTextBox.Text.Trim(),
-                            SenderId = SenderId,
-                            RecipientId = SenderId,
-                        }
-                    );
-                dg_Products.ItemsSource = ProductsList;
-                dg_Products.Items.Refresh();
-                CountOfProductsTextBlock.Text = ProductsList.Count.ToString();
-                TotalWeightTextBlock.Text = Convert.ToString( Convert.ToDecimal(TotalWeightTextBlock.Text)+ Convert.ToDecimal(ProductWeigthTextBox.Text));
-                TotalCostTextBlock.Text = Convert.ToString(Convert.ToDouble(TotalWeightTextBlock.Text)*Convert.ToDouble(TarifCmb.SelectedValue));
-                ProductWeigthTextBox.Text = string.Empty;
-                ProductDescribeTextBox.Text = string.Empty;
-
-            }
-            else
-            {
-                MessageBox.Show("Fill Weight and Describe fields!!");
-            }
-
-        }
-
-        private void AddAllAddedProductsClick(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                sendCode = SendungsnummerTextBox.Text;
-                using(SQLiteConnection connection = new SQLiteConnection(MainWindow.m_dbConnection))
-                {
-                    SQLiteCommand command = new SQLiteCommand(connection);
-
-                    for(int i=0; i<ProductsList.Count; i++) 
-                    {
-                        AddProducts(ProductsList[i]);
-                    }
-                    TransactionList();
-                    if(PaidInGermanyTextBlock.Text == string.Empty)
-                    {
-                        PaidInGermanyTextBlock.Text = "0";
-                    }
-                    if(PaidInMaroccoTextBlock.Text == string.Empty)
-                    {
-                        PaidInMaroccoTextBlock.Text = "0";
-                    }
-                    int sum = Convert.ToInt32(PaidInGermanyTextBlock.Text) + Convert.ToInt32(PaidInMaroccoTextBlock.Text);
-                    if (sum < Convert.ToInt32(TotalCostTextBlock.Text))
-                    {
-                        MessageBox.Show("The sum is not enough!!");
-                    }
-                    else
-                    {
-
-                        command.CommandText = "INSERT INTO PAYMENTS(PAIDINGERMANY,PAIDINMAROCCO,SENDER_ID,RECIPIENTS_ID) VALUES(@PARAM1,@PARAM2,@PARAM3,@PARAM4)";
-                        command.CommandType = CommandType.Text;
-                        command.Parameters.Add(new SQLiteParameter("@PARAM1", PaidInGermanyTextBlock.Text));
-                        command.Parameters.Add(new SQLiteParameter("@PARAM2", PaidInMaroccoTextBlock.Text));
-                        command.Parameters.Add(new SQLiteParameter("@PARAM3", SenderId));
-                        command.Parameters.Add(new SQLiteParameter("@PARAM4", SenderId));
-                        command.ExecuteNonQuery();
-                        TransactionList();
-
-
-                        dg_Products.ItemsSource = null;
-                        dg_Products.Visibility = Visibility.Hidden;
-                        AddAnotherProductButton.Visibility = Visibility.Hidden;
-                        AddTransactionButton.Visibility = Visibility.Visible;
-                        AddAllAddedProductsButton.Visibility = Visibility.Hidden;
-                        AddTransactionButton.IsEnabled = true;
-
-                    }
-
-                    MessageBox.Show("Added!!");
-                }
-            }
-            catch(Exception ex) 
-            {
-                MessageBox.Show(ex.Message);
-            }
-
-        }
 
         private void AddAddressClick(object sender, RoutedEventArgs e)
         {
@@ -400,8 +187,6 @@ GROUP BY
                 AddAddressTextBox.Text = string.Empty;
                 CountryNameComboBox.SelectedIndex = -1;
                 AddressList();
-                FillCityNamesList("MR", false);
-                FillCityNamesList("DE", true);
                 
             }
             catch (Exception ex)
@@ -414,89 +199,7 @@ GROUP BY
 
         
 
-        private void RecipientAddressToDEChangedClick(object sender, RoutedEventArgs e)
-        {
-            if (RecipientAddressToDEChangedCheckBox.IsChecked == true)
-            {
-                FillCityNamesList("DE", false);
-            }
-            else
-            {
-
-                FillCityNamesList("MR", false);
-            }
-        }
-
-        private void FillCityNamesList(string Country, bool IsSender)
-        {  
-            
-            try
-            {
-                using (SQLiteConnection connection = new SQLiteConnection(MainWindow.m_dbConnection))
-                {
-                    SQLiteCommand command = new SQLiteCommand(connection);
-                    command.CommandText = "Select id as Id, City as City  from Addresses where Country=@param1;";
-                    command.CommandType = CommandType.Text;
-                    command.Parameters.Add(new SQLiteParameter("@param1", Country));
-                    SQLiteDataReader dataReader = command.ExecuteReader();
-                    if (dataReader.HasRows)
-                    {
-                        if (Country == "DE")
-                        {
-                            DECityNames.Clear();
-                            while (dataReader.Read())
-                            {
-
-                                DECityNames.Add(new CitiesClass
-                                {
-                                    CityName = Convert.ToString(dataReader["City"]),
-                                    Id = Convert.ToInt16(dataReader["Id"]),
-                                }); ;
-                            }
-                            if(IsSender)
-                            {
-                                SenderCitiesComboBox.ItemsSource = DECityNames;
-                                SenderCitiesComboBox.Items.Refresh();
-                            }
-                            else
-                            {
-                                RecipientCitiesComboBox.ItemsSource = DECityNames;
-                                RecipientCitiesComboBox.Items.Refresh();
-                            }
-                        }
-                        else
-                        {
-                            MRCityNames.Clear();
-                            while (dataReader.Read())
-                            {
-
-                                MRCityNames.Add(new CitiesClass
-                                {
-                                    CityName = Convert.ToString(dataReader["City"]),
-                                    Id = Convert.ToInt16(dataReader["Id"]),
-                                }); ;
-                            }
-                            if (IsSender)
-                            {
-                                SenderCitiesComboBox.ItemsSource = MRCityNames;
-                                SenderCitiesComboBox.Items.Refresh();
-                            }
-                            else
-                            {
-                                RecipientCitiesComboBox.ItemsSource = MRCityNames;
-                                RecipientCitiesComboBox.Items.Refresh();
-                            }
-
-                        }
-                    }
-                }
-            }
-            catch(Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
-
+        
         private void AddressTabLoaded(object sender, RoutedEventArgs e)
         {
             AddressList();
@@ -545,8 +248,6 @@ GROUP BY
                         command.Parameters.Add(new SQLiteParameter("@PARAM1", id));
                         command.ExecuteNonQuery();
                         AddressList();
-                        FillCityNamesList("MR", false);
-                        FillCityNamesList("MR", true);
                     }
                 }
             }
@@ -558,76 +259,9 @@ GROUP BY
 
         private void HomePageLoaded(object sender, RoutedEventArgs e)
         {
-            FillCityNamesList("MR", false);
-            FillCityNamesList("MR", true);
-            FillPriceCmb();
-        }
-
-        private void DeleteProductsListElementClick(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if ((MessageBox.Show("Are You sure?!", "Confirming", MessageBoxButton.YesNo)) == MessageBoxResult.Yes)
-                {
-                    Products products = (Products)dg_Products.SelectedItems[0];
-
-                    int id = Convert.ToInt16(products.id);
-
-                    for (int i = 0; i < ProductsList.Count; i++)
-                    {
-                        if (ProductsList[i].id == id)
-                        {
-                            ProductsList.Remove(ProductsList[i]);
-                            break;
-                        }
-                    }
-                    dg_Products.ItemsSource = ProductsList;
-                    dg_Products.Items.Refresh(); 
-                    CountOfProductsTextBlock.Text = ProductsList.Count.ToString();
-                    TotalWeightTextBlock.Text = Convert.ToString(Convert.ToDecimal(TotalWeightTextBlock.Text) - Convert.ToDecimal(products.Weight));
-                    TotalCostTextBlock.Text = Convert.ToString(Convert.ToDecimal(TotalWeightTextBlock.Text) * Convert.ToDecimal(TarifCmb.SelectedValue));
-
-                }
-            }
-            catch(Exception ex) 
-            {
-                MessageBox.Show(ex.Message, "Error");
-            }
-
-        }
-
-        private void SenderAddressToMRChangedClick(object sender, RoutedEventArgs e)
-        {
-            if (SenderAddressToMRChangedCheckBox.IsChecked == true)
-            {
-                RecipientAddressToDEChangedCheckBox.IsChecked = true;
-                SenderAddressToDEChangedCheckBox.IsChecked = false;
-                FillCityNamesList("MR", true);
-                FillCityNamesList("DE", false);
-            }
-        }
-        private void SenderAddressToDEChangedClick(object sender, RoutedEventArgs e)
-        {
-            if (SenderAddressToDEChangedCheckBox.IsChecked == true)
-            {
-                RecipientAddressToDEChangedCheckBox.IsChecked= false;
-                SenderAddressToMRChangedCheckBox.IsChecked= false;
-                FillCityNamesList("DE", true);
-                FillCityNamesList("MR", false);
-            }
         }
 
         
-
-        
-
-        private void PaidInGermanyTextBlock_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if(PaidInGermanyTextBlock.Text!=string.Empty && TotalCostTextBlock.Text != string.Empty)
-                PaidInMaroccoTextBlock.Text = Convert.ToString(Convert.ToDouble(TotalCostTextBlock.Text) - Convert.ToDouble(PaidInGermanyTextBlock.Text));
-            else
-                PaidInGermanyTextBlock.Text = string.Empty;
-        }
 
         private void TarifTabLoaded(object sender, RoutedEventArgs e)
         {
@@ -650,7 +284,6 @@ GROUP BY
                         command.ExecuteNonQuery();
                         MessageBox.Show("Added!", "Information"); 
                         TarifList();
-                        FillPriceCmb();
                         TarifNameTextBox.Text = string.Empty;
                         TarifCostTextBox.Text = string.Empty;
 
@@ -703,7 +336,6 @@ GROUP BY
                         command.ExecuteNonQuery();
                         MessageBox.Show("Deleted!");
                         TarifList();
-                        FillPriceCmb();
 
                     }
                 }
@@ -713,43 +345,7 @@ GROUP BY
                 MessageBox.Show(ex.Message, "error");
             }
         }
-        private void FillPriceCmb()
-        {
-            tarifClassList.Clear();
-            try
-            {
-                using (SQLiteConnection connection = new SQLiteConnection(m_dbConnection))
-                {
-                    SQLiteCommand command = new SQLiteCommand(connection);
-                    command.CommandText = "Select id as Id, Name as Tname, Cost as Tcost from tarifs order by id desc;";
-                    command.CommandType = CommandType.Text;
-                    var dataReader = command.ExecuteReader();
-                    if(dataReader.HasRows)
-                    {
-                        while(dataReader.Read())
-                        {
-                            tarifClassList.Add(
-                                new TarifClass
-                                {
-                                    Name = dataReader["Tname"].ToString(),
-                                    Cost = Convert.ToDouble(dataReader["Tcost"]),
-                                    Id = Convert.ToInt32(dataReader["Id"]),
-                                }
-                                );
-                        }
-                        TarifCmb.ItemsSource = tarifClassList;
-                        TarifCmb.Items.Refresh();
-                    }
-                }
-            }
-            catch ( Exception ex )
-            {
-                MessageBox.Show(ex.Message, "error"); 
-            }
-        }
-
         
-
         private void IsSendedButtonClick(object sender, RoutedEventArgs e)
         {
             var row = dg_transactions.SelectedItems[0] as DataRowView;
@@ -832,7 +428,7 @@ GROUP BY
                 using(SQLiteConnection connection = new SQLiteConnection(m_dbConnection))
                 {
                     SQLiteCommand cmd = new SQLiteCommand(connection);
-                    cmd.CommandText = "Select id as Id, firstname || ' ' || lastname as UserFullname, username as username from Users;"; 
+                    cmd.CommandText = "Select id as Id, firstname || ' ' || lastname as UserFullname, username as username, role as Role from Users;"; 
                     cmd.CommandType = CommandType.Text;
 
                     DataSet dataSet = new DataSet();
@@ -886,19 +482,20 @@ GROUP BY
 
         private void UserAddButtonClick(object sender, RoutedEventArgs e)
         {
-            if(UserPasswordTextBox.Password.Trim()!=string.Empty && UserLastnameTextBox.Text.Trim()!=string.Empty && UserFirstnameTextBox.Text.Trim()!=string.Empty && UserUsernameTextBox.Text.Trim()!=string.Empty)
+            if(UserPasswordTextBox.Password.Trim()!=string.Empty && UserLastnameTextBox.Text.Trim()!=string.Empty && UserFirstnameTextBox.Text.Trim()!=string.Empty && UserUsernameTextBox.Text.Trim()!=string.Empty && UserRoleCmb.SelectedIndex>-1)
             {
                 try
                 {
                     using (SQLiteConnection connection = new SQLiteConnection(m_dbConnection))
                     {
                         SQLiteCommand cmd = new SQLiteCommand(connection);
-                        cmd.CommandText = "insert into users(firstname, lastname, username, password) values(@param1, @param2, @param3, @param4);" ;
+                        cmd.CommandText = "insert into users(firstname, lastname, username, password, role) values(@param1, @param2, @param3, @param4, @param5);" ;
                         cmd.CommandType = CommandType.Text;
                         cmd.Parameters.Add(new SQLiteParameter("@param1", UserFirstnameTextBox.Text.Trim()));
                         cmd.Parameters.Add(new SQLiteParameter("@param2", UserLastnameTextBox.Text.Trim()));
                         cmd.Parameters.Add(new SQLiteParameter("@param3", UserUsernameTextBox.Text.Trim()));
                         cmd.Parameters.Add(new SQLiteParameter("@param4", UserPasswordTextBox.Password.Trim()));
+                        cmd.Parameters.Add(new SQLiteParameter("@param5", (UserRoleCmb.Text.ToLower())));
                         cmd.ExecuteNonQuery();
                         MessageBox.Show("Added!!");
                         UsersList();
@@ -1013,6 +610,166 @@ GROUP BY
                 }
             }
             catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+
+        
+        private void ProductsAddTabLoaded(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ClientsTabLoaded(object sender, RoutedEventArgs e)
+        {
+            ClientList();
+            FillAddressCmb("MR");
+        }
+
+        private void DeleteClientClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if((MessageBox.Show("Are you sure!!","Confirming!", MessageBoxButton.YesNo)==MessageBoxResult.Yes))
+                {
+                    DataRowView row = dgClientsDataGrid.SelectedItems[0] as DataRowView;
+                    int id = Convert.ToInt32(row["Id"]);
+                    using (SQLiteConnection connection = new SQLiteConnection(m_dbConnection))
+                    {
+                        SQLiteCommand cmd = new SQLiteCommand(connection);
+                        cmd.CommandText = "Delete from Clients where id = @param1;";
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.Add(new SQLiteParameter("@param1", id));
+                        cmd.ExecuteNonQuery();
+                        MessageBox.Show("Deleted!");
+                        ClientList();
+
+                    }
+                }
+                
+            }
+            catch(Exception ex) 
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+
+        private void AddClientButtonClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (ClientFirstName.Text != string.Empty && ClientLastName.Text != string.Empty && ClientsAdressCmb.SelectedIndex > -1 && ClientsPhone.Text != string.Empty)
+                {
+                    using (SQLiteConnection connection = new SQLiteConnection(m_dbConnection))
+                    {
+                        SQLiteCommand cmd = new SQLiteCommand(connection);
+                        cmd.CommandText = "INSERT INTO CLIENTS(FIRStNAME, LASTNAME, PHONE, ADDRESS_ID, ADDDATE) VALUES(@PARAM1,@PARAM2, @PARAM3,@PARAM4,@PARAM5)";
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.Add(new SQLiteParameter("@PARAM1", ClientFirstName.Text.Trim()));
+                        cmd.Parameters.Add(new SQLiteParameter("@PARAM2", ClientLastName.Text.Trim()));
+                        cmd.Parameters.Add(new SQLiteParameter("@PARAM3", ClientsPhone.Text.Trim()));
+                        cmd.Parameters.Add(new SQLiteParameter("@PARAM4", ClientsAdressCmb.SelectedValue));
+                        cmd.Parameters.Add(new SQLiteParameter("@PARAM5", System.DateTime.Now.ToShortDateString()));
+                        cmd.ExecuteNonQuery();
+                        MessageBox.Show("Added!!");
+                        ClientList();
+                        ClientFirstName.Text = string.Empty;
+                        ClientLastName.Text = string.Empty;
+                        ClientsPhone.Text = string.Empty;
+                        ClientsAdressCmb.SelectedIndex = -1;
+                        
+                    }
+                }
+                else
+                    MessageBox.Show("All fields must be filled!!!", "FILL");
+                
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+        private void FillAddressCmb(string country)
+        {
+            try
+            {
+                MRCityNames.Clear();
+                DECityNames.Clear();
+                using(SQLiteConnection connection = new SQLiteConnection(m_dbConnection))
+                {
+                    SQLiteCommand cmd = new SQLiteCommand(connection);
+                    cmd.CommandText = "Select id as Id, City as City from Addresses where country=@param1;";
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.Add(new SQLiteParameter("@param1", country));
+                    SQLiteDataReader reader = cmd.ExecuteReader();
+                    if(reader.HasRows)
+                    {
+                        while(reader.Read())
+                        {
+                            if(country=="DE")
+                            {
+                                DECityNames.Add(new CitiesClass { CityName = reader["City"].ToString(), Id = Convert.ToInt16(reader["Id"]) });
+                            }
+                            else
+                            {
+
+                                MRCityNames.Add(new CitiesClass { CityName = reader["City"].ToString(), Id = Convert.ToInt16(reader["Id"]) });
+                            }
+                        }
+                        if (country == "DE")
+                            ClientsAdressCmb.ItemsSource = DECityNames;
+                        else
+                            ClientsAdressCmb.ItemsSource = MRCityNames;
+                    }
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+        private void ClientList()
+        {
+            try
+            {
+                using(SQLiteConnection connection = new SQLiteConnection(m_dbConnection))
+                {
+                    SQLiteCommand command = new SQLiteCommand(connection);
+                    command.CommandText = "Select id as Id, Firstname || ' '|| Lastname as Fullname, (Select City from Addresses where id = clients.Address_Id) as Address, Phone as Phone  from clients;";
+                    command.CommandType = CommandType.Text;
+
+                    DataSet dataSet = new DataSet();
+                    SQLiteDataAdapter adapter = new SQLiteDataAdapter(command);
+                    adapter.Fill(dataSet, "ClientsList");
+                    dgClientsDataGrid.DataContext = dataSet;
+                    dgClientsDataGrid.Items.Refresh();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+
+
+        private void CheckboxClicked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if(addressChckB.IsChecked==true)
+                {
+                    FillAddressCmb("DE");
+                }
+                else
+                {
+                    FillAddressCmb("MR");
+                }
+            }
+            catch(Exception  ex)
             {
                 MessageBox.Show(ex.Message, "error");
             }

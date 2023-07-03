@@ -6,9 +6,10 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:TS"
         mc:Ignorable="d"
-        Title="Window1" Height="170" Width="300"
+        Title="Login" 
+        Height="170" Width="300"
         WindowStartupLocation="CenterScreen"
-        Icon="Firmalogo.png"
+        Icon="/Images/icon.ico"
         >
     <Grid>
         <Grid.RowDefinitions>

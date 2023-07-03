@@ -22,6 +22,7 @@ namespace TS
     public partial class Window1 : Window
     {
         SQLiteConnection? m_dbConnection;
+        string Role; 
         public Window1()
         {
             InitializeComponent();
@@ -30,6 +31,9 @@ namespace TS
             {
                 m_dbConnection = new SQLiteConnection(ConfigurationManager.ConnectionStrings["connection"].ConnectionString);
                 m_dbConnection.Open();
+                UsernameTextBox.Text = "isko";
+                PasswordtextBox.Password = "4595";
+                PasswordtextBox.Focus();
             }
             catch(Exception ex)
             {
@@ -45,7 +49,7 @@ namespace TS
                 {
                     if (Logining())
                     {
-                        MainWindow welcome = new MainWindow();
+                        MainWindow welcome = new MainWindow(Role);
                         welcome.Show();
                         this.Hide();
                         this.Close();
@@ -74,6 +78,12 @@ namespace TS
                 using (SQLiteConnection dbConnection = new SQLiteConnection(m_dbConnection))
                 {
                     SQLiteCommand command = new SQLiteCommand(dbConnection);
+                    command.CommandText = "Select role from Users where username = @param1 and password = @param2;";
+                    command.CommandType = System.Data.CommandType.Text;
+                    command.Parameters.Add(new SQLiteParameter("@param1", UsernameTextBox.Text.Trim()));
+                    command.Parameters.Add(new SQLiteParameter("@param2", PasswordtextBox.Password.Trim()));
+                    this.Role = command.ExecuteScalar().ToString();
+                    command.Parameters.Clear();
                     command.CommandText = "Select count(id) from Users where username = @param1 and password = @param2;";
                     command.CommandType = System.Data.CommandType.Text;
                     command.Parameters.Add(new SQLiteParameter("@param1", UsernameTextBox.Text.Trim()));

@@ -5,12 +5,17 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="AllTransactions.xlsx" />
-    <None Remove="Firmalogo.png" />
+    <None Remove="icon.ico" />
     <None Remove="Transaction.xlsx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,11 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Images\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Firmalogo.png" />
+    <Resource Include="Images\icon.ico" />
   </ItemGroup>
 
 </Project>
