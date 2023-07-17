@@ -1,10 +1,12 @@
-﻿<Window x:Class="TS.MainWindow"
+﻿<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        xmlns:local="clr-namespace:TS"
+        xmlns:local="clr-namespace:TS" 
+        xmlns:controls="clr-namespace:System.Windows.Controls;assembly=DotNetProjects.Input.Toolkit"
+        xmlns:Classes="clr-namespace:TS.Classes" x:Class="TS.MainWindow"
         mc:Ignorable="d"
         Title="TS" 
         WindowStartupLocation="CenterScreen" Icon="/Images/icon.ico"
@@ -60,16 +62,204 @@
 
                                     <Grid>
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width=".15*" />
                                             <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="0.2*"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="auto" MinHeight="25"/>
-                                            <RowDefinition Height="4.5*"/>
+                                            <RowDefinition Height="auto" MinHeight="60"/>
+                                            <RowDefinition Height=".8*"/>
+                                            <RowDefinition Height=".8*"/>
                                             <RowDefinition Height="7*"/>
+                                            <RowDefinition Height="*"/>
                                         </Grid.RowDefinitions>
+
+                                        <!--Title-->
+                                        <TextBlock Grid.Row="0" Text="Products adding" FontSize="40" Grid.ColumnSpan="4"  FontWeight="Bold" FontFamily="Times New Roman" HorizontalAlignment="Center"/>
+                                         
+                                        <TextBlock Text="Sender:" Grid.Row="1"  Grid.Column="0" VerticalAlignment="Top"/>
+
+                                        <WrapPanel Grid.Row="1" Grid.Column="1" VerticalAlignment="Top" Orientation="Horizontal">
+                                            <TextBox x:Name="SearchSendertxb" TextChanged="SearchSendertxbEvent" Width="auto"
+                                                     materialDesign:HintAssist.Hint="Search(by Name and Phone)"
+                                                     Margin="0,0,10,0"></TextBox>
+                                            <ComboBox 
+                                                  Width="auto"
+                                                  Height="auto"
+                                                Margin="10,0,0,0"
+                                                  IsTextSearchEnabled="False"
+                                                  x:Name="Senderscmb"
+                                                SelectionChanged="SenderSelectionChanged"
+                                                      SelectedValuePath="Id"
+                                                      >
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Fullname}"/>
+                                                            <TextBlock Text="-"/>
+                                                            <TextBlock Text="{Binding Phone}"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+
+                                        </WrapPanel>
+                                        <TextBlock Text="Recipient:" Grid.Row="1"  Grid.Column="2" VerticalAlignment="Top"/>
+
+                                        <WrapPanel Grid.Row="1" Grid.Column="3" VerticalAlignment="Top" Orientation="Horizontal">
+                                            <TextBox x:Name="SearchRecipienttxb" TextChanged="SearchRecipienttxbEvent" Width="auto"
+                                                     materialDesign:HintAssist.Hint="Search(by Name and Phone)"
+                                                     Margin="0,0,10,0"></TextBox>
+                                            <ComboBox 
+                                                  Width="auto"
+                                                  Height="auto"
+                                                Margin="10,0,0,0"
+                                                  IsTextSearchEnabled="False"
+                                                  x:Name="Recipientscmb"
+                                                      SelectedValuePath="Id"
+                                                SelectionChanged="RecipientsSelectionChanged"
+                                                      >
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Fullname}"/>
+                                                            <TextBlock Text="-"/>
+                                                            <TextBlock Text="{Binding Phone}"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+
+                                        </WrapPanel>
+
+                                        <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
+                                            <TextBox x:Name="ProductsWeight" MinWidth="120" materialDesign:HintAssist.Hint="Produst's weight" Margin="0,0,10,0" />
+                                            <TextBox x:Name="ProductsType" MinWidth="120" materialDesign:HintAssist.Hint="Produst's type" Margin="10,0,0,0"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2">
+                                            <DatePicker Name="productsAddDate" MinWidth="80" Margin="0,0,10,0" />
+                                            <ComboBox Name="tarifCmb" SelectionChanged="TarifselectionChanged" MinWidth="60" materialDesign:HintAssist.Hint="Choose a tariff" Margin="10,0,0,0" SelectedValuePath="Id">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Name}" FontFamily="Times new Roman" />
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+
+                                        <Button x:Name="AddProductButton" Click="AddProductButtonClick" MinWidth="60" Margin="10,0,0,0" Grid.Row="2" Grid.Column="4" Width="120" HorizontalAlignment="Right" >
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="AddBold" Width="25" Height="20" />
+                                                <TextBlock Text="Add" FontWeight="Bold" FontFamily="Times new Roman" FontSize="20"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <materialDesign:Flipper
+                                            IsFlippedChanged="SendCodeFlippedChanged"
+                                            Grid.Row="0" Grid.Column="4" 
+                                            VerticalAlignment="Center" 
+                                            HorizontalAlignment="Right">
+                                            <materialDesign:Flipper.FrontContent>
+                                                <Button
+                                                    Width="220"
+                                                    Height="60"
+                                                    Margin="8"
+                                                    materialDesign:ButtonAssist.CornerRadius="8"
+                                                    Command="{x:Static materialDesign:Flipper.FlipCommand}"
+                                                    Content="Send Code" />
+                                            </materialDesign:Flipper.FrontContent>
+                                            <materialDesign:Flipper.BackContent>
+                                                <Button
+                                                    Margin="8"  
+                                                    Width="220"
+                                                    Height="60"
+                                                    Name="SendCodeFlipperButton"
+                                                    materialDesign:ButtonAssist.CornerRadius="8"
+                                                    Command="{x:Static materialDesign:Flipper.FlipCommand}"
+                                                     />
+                                            </materialDesign:Flipper.BackContent>
+                                        </materialDesign:Flipper>
+
+                                        <!--Products DataGrid-->
+                                        <DataGrid Name="dgProducts" CanUserAddRows="False" CanUserReorderColumns="True"
+                                                  AutoGenerateColumns="False" 
+                                                  ItemsSource="{Binding ProductsDgList, Mode=TwoWay}"
+                                                  ColumnHeaderStyle="{StaticResource MaterialDesignDataGridColumnHeader}"
+                                                  Grid.ColumnSpan="4" Grid.Row="3" VerticalAlignment="Top"
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  HorizontalAlignment="Center">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn
+                                                    Header="Id"
+                                                    Binding="{Binding Id}"
+                                                    Width="60"
+                                                    />
+                                                <DataGridTextColumn
+                                                    Header="Weight"
+                                                    Binding="{Binding Weight}"
+                                                    Width="*"
+                                                    />
+                                                <DataGridTextColumn
+                                                    Header="Type"
+                                                    Binding="{Binding Type}"
+                                                    Width="*"
+                                                    />
+                                                <DataGridTextColumn
+                                                    Header="Sendcode"
+                                                    Binding="{Binding SendCode}"
+                                                    Width="*"
+                                                    />
+                                                <DataGridTextColumn
+                                                    Header="Date"
+                                                    Binding="{Binding Date}"
+                                                    Width="*"
+                                                    />
+                                                <DataGridTemplateColumn>
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Button Click="ProductEditClick">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <materialDesign:PackIcon Kind="Edit"
+                                                                                             Width="20"
+                                                                                             Height="20"/>
+                                                                    <TextBlock Text="Edit"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+                                                <DataGridTemplateColumn>
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Button Click="ProductDeleteClick">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <materialDesign:PackIcon Kind="Delete"
+                                                                                             Width="20"
+                                                                                             Height="20"/>
+                                                                    <TextBlock Text="Del"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+
+
+                                        <TextBlock Text="" Name="totalCostTxb" Grid.Row="4" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold" FontFamily="Times new Roman"/>
+                                        <materialDesign:PackIcon Width="auto" Height="auto" Name="paidSymbol" Grid.Column="3" Grid.Row="4" Visibility="Hidden"/>
+                                        <Button x:Name="PayProductsButton" Click="PayProductsButtonClick" Grid.Row="4" Grid.Column="4" Width="auto" MaxWidth="150" >
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Payment"
+                                                                         Width="15"
+                                                                         Height="15"
+                                                                         VerticalAlignment="Center"
+                                                                         HorizontalAlignment="Left"/>
+                                                <TextBlock Text="Pay" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                            </StackPanel>
+                                        </Button>
                                         
-                                        
+
                                     </Grid>
 
                                 </TabItem>
@@ -105,12 +295,12 @@
                                         </Grid.RowDefinitions>
 
                                         <TextBlock Text="Clients" FontSize="50" FontWeight="Bold" FontFamily="Times New Roman" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.ColumnSpan="5"/>
-                                        <TextBox Name="ClientFirstName" Grid.Row="1" materialDesign:HintAssist.Hint="Firstname" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
-                                        <TextBox Name="ClientLastName" Grid.Row="1" materialDesign:HintAssist.Hint="Lastname" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
-                                        <TextBox Name="ClientsPhone" Grid.Row="1" materialDesign:HintAssist.Hint="Phone" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
+                                        <TextBox x:Name="ClientFirstName" Grid.Row="1" materialDesign:HintAssist.Hint="Firstname" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
+                                        <TextBox x:Name="ClientLastName" Grid.Row="1" materialDesign:HintAssist.Hint="Lastname" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
+                                        <TextBox x:Name="ClientsPhone" Grid.Row="1" materialDesign:HintAssist.Hint="Phone" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
                                         <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5">
-                                            <CheckBox Content="DE" Margin="0,0,5,0" Click="CheckboxClicked" Name="addressChckB"/>
-                                            <ComboBox Name="ClientsAdressCmb"  materialDesign:HintAssist.Hint="Address"   SelectedValuePath="Id">
+                                            <CheckBox Content="DE" Margin="0,0,5,0" Click="CheckboxClicked" x:Name="addressChckB"/>
+                                            <ComboBox x:Name="ClientsAdressCmb"  materialDesign:HintAssist.Hint="Address"   SelectedValuePath="Id">
                                                 <ComboBox.ItemTemplate>
                                                     <DataTemplate>
                                                         <TextBlock Text="{Binding CityName}"/>
@@ -118,17 +308,17 @@
                                                 </ComboBox.ItemTemplate>
                                             </ComboBox>
                                         </StackPanel>
-                                        <Button Name="AddClientButton" Click="AddClientButtonClick" Grid.Row="1" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5">
+                                        <Button x:Name="AddClientButton" Click="AddClientButtonClick" Grid.Row="1" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5">
                                             <StackPanel Orientation="Horizontal">
-                                                <materialDesign:PackIcon Kind="AddBox" Width="15" Height="15" VerticalAlignment="Center" HorizontalAlignment="Left"></materialDesign:PackIcon>
+                                                <materialDesign:PackIcon Kind="AddBox" Width="15" Height="15" VerticalAlignment="Center" HorizontalAlignment="Left"/>
                                                 <TextBlock Text="Add" HorizontalAlignment="Right" VerticalAlignment="Center" FontWeight="Bold" />
                                             </StackPanel>
                                         </Button>
-                                        
-                                        
+
+
                                         <!--Datagrid-->
 
-                                        <DataGrid Name="dgClientsDataGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="True"
+                                        <DataGrid x:Name="dgClientsDataGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="True"
                                                   ItemsSource="{Binding ClientsList, Mode=TwoWay}" Grid.ColumnSpan="5" Grid.Row="2" Margin="5" VerticalScrollBarVisibility="Auto">
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn
@@ -165,9 +355,8 @@
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
                                             </DataGrid.Columns>
-                                            
+
                                         </DataGrid>
-                                        
                                     </Grid>
 
                                 </TabItem>
@@ -202,13 +391,13 @@
                                             MinWidth="200"
                                             Grid.Row="1"
                                             Grid.Column="0"
-                                            Name="AddAddressTextBox"
+                                            x:Name="AddAddressTextBox"
                                             materialDesign:HintAssist.Hint="City"
                                             VerticalAlignment="Center"
                                             Margin="5"
                                             />
                                         <ComboBox 
-                                            Name="CountryNameComboBox"
+                                            x:Name="CountryNameComboBox"
                                             Grid.Row="1"
                                             Grid.Column="1"
                                             materialDesign:HintAssist.Hint="Country"
@@ -222,7 +411,7 @@
 
                                         </ComboBox>
                                         <Button 
-                                            Name="AddAddressButton"
+                                            x:Name="AddAddressButton"
                                             Click="AddAddressClick"
                                             Content="Add"
                                             Grid.Column="3"
@@ -237,7 +426,7 @@
                                             ItemsSource="{Binding AddressesList, Mode=TwoWay}"
                                             Grid.Row="2"
                                             Grid.ColumnSpan="3"
-                                            Name="dgAddresses"
+                                            x:Name="dgAddresses"
                                             VerticalScrollBarVisibility="Auto"
                                             HorizontalScrollBarVisibility="Auto"
                                             
@@ -260,10 +449,10 @@
                                                         <DataTemplate>
 
                                                             <Button
-                                                                    Name="DeleteAddressButton"
+                                                                    x:Name="DeleteAddressButton"
                                                                     Click="DeleteAddressClick"
                                                                     Content="Delete"
-                                                                    ></Button>
+                                                                    />
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
@@ -309,7 +498,7 @@
                                         <TextBox Grid.Row="1"
                                                    Grid.Column="0"
                                                    materialDesign:HintAssist.Hint="Tarif name"
-                                                   Name="TarifNameTextBox"
+                                                   x:Name="TarifNameTextBox"
                                                    HorizontalAlignment="Center"
                                                  VerticalAlignment="Top"
                                                  Margin="5"
@@ -317,13 +506,13 @@
                                         <TextBox Grid.Row="1"
                                                    Grid.Column="1"
                                                    materialDesign:HintAssist.Hint="Tarif cost"
-                                                   Name="TarifCostTextBox"
+                                                   x:Name="TarifCostTextBox"
                                                  HorizontalAlignment="Center"
                                                  VerticalAlignment="Top"
                                                  PreviewTextInput="PreviewTextInput1"
                                                  Margin="5"/>
                                         <Button 
-                                            Name="AddTarifButton"
+                                            x:Name="AddTarifButton"
                                             Click="AddTarifButtonClick"
                                             Content="Add"
                                             Grid.Column="2"
@@ -341,7 +530,7 @@
                                             CanUserResizeRows="True"
                                             Grid.Column="0"
                                             Grid.ColumnSpan="4"
-                                            Name="dgTarif"
+                                            x:Name="dgTarif"
                                             AutoGenerateColumns="False"
                                             
                                             ItemsSource="{Binding Tarifdg, Mode=TwoWay}">
@@ -368,7 +557,7 @@
                                                 <DataGridTemplateColumn>
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
-                                                            <Button Name="DeleteTarifButton"
+                                                            <Button x:Name="DeleteTarifButton"
                                                                     Click="DeleteTarifClick"
                                                                     Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
                                                                     >
@@ -382,11 +571,11 @@
                                                 </DataGridTemplateColumn>
 
                                             </DataGrid.Columns>
-                                            
+
                                         </DataGrid>
 
                                     </Grid>
-                                        
+
                                 </TabItem>
                             </TabControl>
                         </materialDesign:Card>
@@ -430,14 +619,14 @@
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     Grid.Column="0"/>
-                                <TextBox Name="SearchTransactionTextBox"
+                                <TextBox x:Name="SearchTransactionTextBox"
                                      Margin="10"
                                      HorizontalAlignment="Left"
                                      VerticalAlignment="Center"
                                          Grid.Column="1"
                                          materialDesign:HintAssist.Hint="Search"
                                          TextChanged="SearchTransactionTextBox_TextChanged"
-                                     ></TextBox>
+                                     />
                             </Grid>
                         </StackPanel>
                         <StackPanel Grid.Row="1">
@@ -541,9 +730,7 @@
                                                     <Button
                                                         Click="IsSendedButtonClick"
                                                         Content="{Binding sendStatus}"
-                                                        >
-                                                        
-                                                    </Button>
+                                                        />
                                                 </StackPanel>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
@@ -604,15 +791,15 @@
                             <RowDefinition Height="100"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <TextBox Name="UserFirstnameTextBox" Grid.Row="0" Grid.Column="0" materialDesign:HintAssist.Hint="Firstname" VerticalAlignment="Center" Margin="15"/>
-                        <TextBox Name="UserLastnameTextBox" Grid.Row="0" Grid.Column="1" materialDesign:HintAssist.Hint="Lastname" VerticalAlignment="Center" Margin="15"/>
-                        <TextBox Name="UserUsernameTextBox" Grid.Row="0" Grid.Column="2" materialDesign:HintAssist.Hint="Username" VerticalAlignment="Center" Margin="15"/>
-                        <PasswordBox Name="UserPasswordTextBox" Grid.Row="0" Grid.Column="3" materialDesign:HintAssist.Hint="Password" VerticalAlignment="Center" Margin="15"/>
-                        <ComboBox Name="UserRoleCmb" Grid.Row="0" Grid.Column="4" VerticalAlignment="Center" Margin="15" materialDesign:HintAssist.Hint="Role">
+                        <TextBox x:Name="UserFirstnameTextBox" Grid.Row="0" Grid.Column="0" materialDesign:HintAssist.Hint="Firstname" VerticalAlignment="Center" Margin="15"/>
+                        <TextBox x:Name="UserLastnameTextBox" Grid.Row="0" Grid.Column="1" materialDesign:HintAssist.Hint="Lastname" VerticalAlignment="Center" Margin="15"/>
+                        <TextBox x:Name="UserUsernameTextBox" Grid.Row="0" Grid.Column="2" materialDesign:HintAssist.Hint="Username" VerticalAlignment="Center" Margin="15"/>
+                        <PasswordBox x:Name="UserPasswordTextBox" Grid.Row="0" Grid.Column="3" materialDesign:HintAssist.Hint="Password" VerticalAlignment="Center" Margin="15"/>
+                        <ComboBox x:Name="UserRoleCmb" Grid.Row="0" Grid.Column="4" VerticalAlignment="Center" Margin="15" materialDesign:HintAssist.Hint="Role">
                             <ComboBoxItem Content="Operator"/>
                             <ComboBoxItem Content="Admin"/>
                         </ComboBox>
-                        <Button Name="UserAddButton" Click="UserAddButtonClick" Grid.Row="0" Grid.Column="5" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15">
+                        <Button x:Name="UserAddButton" Click="UserAddButtonClick" Grid.Row="0" Grid.Column="5" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15">
                             <StackPanel>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -622,9 +809,9 @@
                                     <materialDesign:PackIcon Kind="Add" Grid.Column="0"/>
                                     <TextBlock Text="Add" Grid.Column="1"/>
                                 </Grid>
-                            </StackPanel>                            
+                            </StackPanel>
                         </Button>
-                        <DataGrid Name="dg_users" AutoGenerateColumns="False"
+                        <DataGrid x:Name="dg_users" AutoGenerateColumns="False"
                                   CanUserAddRows="False"
                                   CanUserDeleteRows="False"
                                   CanUserReorderColumns="True"
@@ -657,9 +844,39 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                
+
                             </DataGrid.Columns>
                         </DataGrid>
+                    </Grid>
+                </TabItem>
+                <TabItem Loaded="SettingsTabLoaded">
+                    <TabItem.Header>
+                        <StackPanel Width="auto" Height="auto" >
+                            <materialDesign:PackIcon Width="24" Height="24" Kind="Settings"  HorizontalAlignment="Center"/>
+                            <TextBlock Text="Settings" HorizontalAlignment="Center" />
+
+                        </StackPanel>
+                    </TabItem.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Slider  x:Name="TextSizeSlider" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Center"
+                                Value="16" Maximum="24" Minimum="8" VerticalAlignment="Center" Width="150" TickFrequency="1" Ticks="1"
+                                ValueChanged="ValueChangedSlider" />
+                        <TextBlock Text="{Binding ElementName=TextSizeSlider, Path=Value}" FontSize="20" Name="SizeTextbolock" />
                     </Grid>
                 </TabItem>
             </TabControl>

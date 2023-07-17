@@ -1,0 +1,58 @@
+﻿<Window x:Class="TS.Payment"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TS"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        mc:Ignorable="d"
+        Title="Payment" Height="300" Width="500"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height=".8*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock FontFamily="Times new Roman" FontSize="40" Grid.ColumnSpan="2"
+                   FontWeight="Bold" Text="Payment" VerticalAlignment="Center" 
+                   HorizontalAlignment="Center"/>
+        <TextBlock FontFamily="Times new Roman" FontSize="16"
+                   FontWeight="Medium" VerticalAlignment="Center" HorizontalAlignment="Center"
+                   Grid.Row="1" Grid.ColumnSpan="2" Name="DescribeTxb"/>
+        <TextBox x:Name="paidInGermany" Grid.Row="2"  Grid.Column="0" materialDesign:HintAssist.Hint="Paid in Germany" VerticalAlignment="Center" HorizontalAlignment="Center" TextChanged="paidInGermany_TextChanged" />
+        <TextBox x:Name="paidInMarocco" Grid.Row="2"  Grid.Column="1" materialDesign:HintAssist.Hint="Paid in Marocco" VerticalAlignment="Center" HorizontalAlignment="Center" IsEnabled="False"/>
+        <Button x:Name="okClickButton" Click="okClick" Grid.Column="0" Grid.Row="3" 
+                VerticalAlignment="Center" HorizontalAlignment="Center">
+            <StackPanel Orientation="Horizontal">
+                <materialDesign:PackIcon VerticalAlignment="Center" 
+                                         HorizontalAlignment="Left"
+                                         Kind="CheckBold"
+                                         Width="15"
+                                         Height="15"
+                                         />
+                <TextBlock Text="Ok" VerticalAlignment="Center"
+                           HorizontalAlignment="Right"/>
+            </StackPanel>
+        </Button>
+        <Button x:Name="CancelClickButton" Click="cancelClick" Grid.Column="1" Grid.Row="3" 
+                VerticalAlignment="Center" HorizontalAlignment="Center">
+            <StackPanel Orientation="Horizontal">
+                <materialDesign:PackIcon VerticalAlignment="Center" 
+                                         HorizontalAlignment="Left"
+                                         Kind="CloseBox"
+                                         Width="15"
+                                         Height="15"
+                                         />
+                <TextBlock Text="Cancel" VerticalAlignment="Center"
+                           HorizontalAlignment="Right"/>
+            </StackPanel>
+        </Button>
+        
+    </Grid>
+</Window>

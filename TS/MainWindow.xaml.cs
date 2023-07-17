@@ -26,8 +26,6 @@ namespace TS
         List<TarifClass> tarifClassList = new List<TarifClass>();
         List<Client> clientsList = new List<Client>();
 
-        List<Client>? Searchedclients = new List<Client>();
-        string? sendCode;
         int SenderId;
         int RecipientsId;
         string Role;
@@ -36,13 +34,14 @@ namespace TS
         public MainWindow( string role)
         {
             InitializeComponent();
-
             try 
             {
+                                                                                                                                                                                                                                                                                                                                                                         
                 m_dbConnection = new SQLiteConnection(ConfigurationManager.ConnectionStrings["connection"].ConnectionString);
                 m_dbConnection.Open();
                 Time();
                 Role = role;
+                productsAddDate.SelectedDate = DateTime.Now;
             }
             catch(Exception ex)
             {
@@ -51,6 +50,7 @@ namespace TS
 
             
         }
+        
         private void Time()
         {
             try
@@ -284,6 +284,7 @@ GROUP BY
                         command.ExecuteNonQuery();
                         MessageBox.Show("Added!", "Information"); 
                         TarifList();
+                        fillTariffs();
                         TarifNameTextBox.Text = string.Empty;
                         TarifCostTextBox.Text = string.Empty;
 
@@ -618,13 +619,88 @@ GROUP BY
         
         private void ProductsAddTabLoaded(object sender, RoutedEventArgs e)
         {
+            fillClients();
+            fillTariffs();
+        }
+        private void fillTariffs()
+        {
+            try
+            {
+                if(tarifClassList.Count > 0)
+                {
+                    tarifClassList.Clear();
+                }
+                using(var connection =  new SQLiteConnection(m_dbConnection))
+                {
+                    SQLiteCommand cmd = new SQLiteCommand(connection);
+                    cmd.CommandText = "Select id as Id, Name as Name, cost as Cost from tarifs;";
+                    cmd.CommandType = CommandType.Text;
+                    var reader = cmd.ExecuteReader();
 
+                    if( reader.HasRows)
+                    {
+                        while(reader.Read())
+                        {
+                            tarifClassList.Add(new TarifClass
+                            {
+                                Cost = Convert.ToDouble(reader["Cost"]),
+                                Id = Convert.ToInt32(reader["Id"]),
+                                Name = reader["Name"].ToString(), 
+                            });
+                        }
+                        tarifCmb.ItemsSource = tarifClassList;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+        private void fillClients()
+        {
+            try
+            {
+                using(var connection =  new SQLiteConnection(m_dbConnection))
+                {
+                    if(clientsList.Count > 0) { clientsList.Clear(); }
+                    var cmd = new SQLiteCommand(connection);
+                    cmd.CommandText = "Select Id as Id, Firstname || ' ' || Lastname as Fullname, Phone as Phone, Address_Id as AddressId from clients;";
+                    cmd.CommandType = CommandType.Text;
+                    SQLiteDataReader reader = cmd.ExecuteReader();
+                    if( reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            clientsList.Add(new Client
+                            {
+                                AddressId = Convert.ToInt32(reader["AddressId"]),
+                                Fullname = reader["Fullname"].ToString(),
+                                Id = Convert.ToInt32(reader["Id"]),
+                                PhoneNumber = reader["Phone"].ToString()
+                            });
+                        }
+                        Recipientscmb.ItemsSource = clientsList;
+                        Recipientscmb.Items.Refresh();
+                        Senderscmb.ItemsSource = clientsList;
+                        Senderscmb.Items.Refresh();
+                    }    
+                    
+
+                    //autocomplete.SelectedItem
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
         }
 
         private void ClientsTabLoaded(object sender, RoutedEventArgs e)
         {
             ClientList();
             FillAddressCmb("MR");
+
         }
 
         private void DeleteClientClick(object sender, RoutedEventArgs e)
@@ -644,6 +720,7 @@ GROUP BY
                         cmd.ExecuteNonQuery();
                         MessageBox.Show("Deleted!");
                         ClientList();
+                        fillClients();
 
                     }
                 }
@@ -674,6 +751,7 @@ GROUP BY
                         cmd.ExecuteNonQuery();
                         MessageBox.Show("Added!!");
                         ClientList();
+                        fillClients();
                         ClientFirstName.Text = string.Empty;
                         ClientLastName.Text = string.Empty;
                         ClientsPhone.Text = string.Empty;
@@ -773,6 +851,334 @@ GROUP BY
             {
                 MessageBox.Show(ex.Message, "error");
             }
+        }
+
+        
+     
+
+        
+
+        private void SearchRecipienttxbEvent(object sender, TextChangedEventArgs e)
+        {
+            try
+            {
+                string typedText = SearchRecipienttxb.Text.Trim().ToLower();
+                if(string.IsNullOrEmpty(typedText))
+                {
+                    Recipientscmb.ItemsSource = clientsList;
+                }
+                else
+                {
+                    List<Client> tempRlist = new List<Client>();
+                    for(int i = 0; i < clientsList.Count; i++)
+                    {
+                        if (clientsList[i].Fullname.ToLower().StartsWith(typedText))
+                            tempRlist.Add(clientsList[i]);
+                        else if(clientsList[i].PhoneNumber.ToLower().StartsWith(typedText))
+                            tempRlist.Add(clientsList[i]);
+                    }
+                    if (tempRlist.Count > 0)
+                        Recipientscmb.ItemsSource = tempRlist;
+                    else
+                        Recipientscmb.ItemsSource = clientsList;
+                    
+                }
+                Recipientscmb.Items.Refresh();
+                Recipientscmb.IsDropDownOpen = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+
+        
+
+        private void SearchSendertxbEvent(object sender, TextChangedEventArgs e)
+        {
+            try
+            {
+                string typedText = SearchSendertxb.Text.Trim().ToLower();
+                if (string.IsNullOrEmpty(typedText))
+                {
+                    Senderscmb.ItemsSource = clientsList;
+                }
+                else
+                {
+                    List<Client> tempRlist = new List<Client>();
+                    for (int i = 0; i < clientsList.Count; i++)
+                    {
+                        if (clientsList[i].Fullname.ToLower().StartsWith(typedText))
+                            tempRlist.Add(clientsList[i]);
+                        else if (clientsList[i].PhoneNumber.ToLower().StartsWith(typedText))
+                            tempRlist.Add(clientsList[i]);
+                    }
+                    if (tempRlist.Count > 0)
+                        Senderscmb.ItemsSource = tempRlist;
+                    else
+                        Senderscmb.ItemsSource = clientsList;
+
+                }
+                Senderscmb.Items.Refresh();
+                Senderscmb.IsDropDownOpen = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+
+        private void SenderSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            SenderId = Convert.ToInt32(Senderscmb.SelectedValue);
+            //MessageBox.Show(SenderId.ToString());
+            if (Recipientscmb.SelectedIndex > -1 && productsAddDate.Text != string.Empty)
+            {
+                string sendcode = sendCodeGenerator(SenderId, RecipientsId, Convert.ToDateTime(productsAddDate.Text).Month);
+                ProductsListDg(sendcode);
+                CountDeliverCost(sendcode);
+            }
+        }
+
+        private void RecipientsSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            RecipientsId = Convert.ToInt32(Recipientscmb.SelectedValue);
+            //MessageBox.Show(RecipientsId.ToString());
+            if(Senderscmb.SelectedIndex>-1 && productsAddDate.Text!=string.Empty)
+            {
+                string sendcode = sendCodeGenerator(SenderId, RecipientsId, Convert.ToDateTime(productsAddDate.Text).Month);
+                ProductsListDg(sendcode);
+                CountDeliverCost(sendcode);
+                if (IsPaid(sendcode))
+                {
+                    paidSymbol.Kind = MaterialDesignThemes.Wpf.PackIconKind.CashCheck;
+                    paidSymbol.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    paidSymbol.Kind = MaterialDesignThemes.Wpf.PackIconKind.CashRemove;
+                    paidSymbol.Visibility = Visibility.Visible;
+                }
+                    
+            }
+        }
+
+        private void AddProductButtonClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (productsAddDate.Text.Trim() != string.Empty && ProductsType.Text.Trim() != string.Empty && ProductsWeight.Text.Trim() != string.Empty && Senderscmb.SelectedIndex>-1 && Recipientscmb.SelectedIndex > -1 )
+                {
+                    using (var connection = new SQLiteConnection(m_dbConnection))
+                    {
+                        string sendcode = sendCodeGenerator(SenderId, RecipientsId, Convert.ToDateTime(productsAddDate.Text).Month);
+                        var cmd = new SQLiteCommand(connection);
+                        cmd.CommandText = "INSERT INTO PRODUCTS(WEIGHT, TYPE, SENDER_ID, RECIPIENT_ID, SEND_CODE, ISSENDED, DATE) VALUES(@P1,@P2,@P3,@P4,@P5,@P6,@P7)";
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.Add(new SQLiteParameter("@P1", ProductsWeight.Text.Trim()));
+                        cmd.Parameters.Add(new SQLiteParameter("@P2", ProductsType.Text.Trim()));
+                        cmd.Parameters.Add(new SQLiteParameter("@P3", SenderId));
+                        cmd.Parameters.Add(new SQLiteParameter("@P4", RecipientsId));
+                        cmd.Parameters.Add(new SQLiteParameter("@P5", sendCodeGenerator(SenderId, RecipientsId, Convert.ToDateTime(productsAddDate.Text).Month)));
+                        cmd.Parameters.Add(new SQLiteParameter("@P6","0"));
+                        cmd.Parameters.Add(new SQLiteParameter("@P7", productsAddDate.Text.Trim()));
+                        cmd.ExecuteNonQuery();
+                        MessageBox.Show("Added!!");
+                        ProductsListDg(sendcode);
+                        CountDeliverCost(sendcode);
+
+                    }
+                }
+                else
+                    MessageBox.Show("Fill all fields!!");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+        private string sendCodeGenerator(int sId, int rId, int month)
+        {
+            try
+            {
+                using(var connection =  new SQLiteConnection(m_dbConnection))
+                {
+                    var cmd = new SQLiteCommand(connection);
+                    cmd.CommandText = $"select address_id from clients where id = {rId}";
+                    cmd.CommandType = CommandType.Text;
+                    int Raddressid = Convert.ToInt32(cmd.ExecuteScalar());
+                    return ($"{sId.ToString("D4")}{Raddressid.ToString("D3")}{month.ToString("D2")}");
+                }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+                return string.Empty;
+            }
+        }
+
+        private void SendCodeFlippedChanged(object sender, RoutedPropertyChangedEventArgs<bool> e)
+        {
+            if(Senderscmb.SelectedIndex>-1&& Recipientscmb.SelectedIndex>-1 && productsAddDate.Text!=string.Empty)
+            {
+                SendCodeFlipperButton.Content = sendCodeGenerator(SenderId, RecipientsId, Convert.ToDateTime(productsAddDate.Text).Month);
+            }
+            else
+            {
+                SendCodeFlipperButton.Content = "Please select sender, recipient and date\n to generate sendcode.";
+            }
+        }
+
+        private void ProductDeleteClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var row = dgProducts.SelectedItems[0] as DataRowView;
+                int id = Convert.ToInt32(row["id"]);
+                if(MessageBox.Show("Are you sure?!", "Confirming", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                {
+                    using(var connection = new SQLiteConnection(m_dbConnection))
+                    {
+                        var cmd = new SQLiteCommand(connection);
+                        cmd.CommandText = "delete from products where id = @p;";
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.Add(new SQLiteParameter("@p", id));
+                        cmd.ExecuteNonQuery();
+                        MessageBox.Show("Deleted!!");
+                        ProductsListDg(row["SendCode"].ToString());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+
+        private void ProductEditClick(object sender, RoutedEventArgs e)
+        {
+
+        }
+        private void ProductsListDg(string SendCode)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(m_dbConnection))
+                {
+                    var command = new SQLiteCommand(connection);
+                    command.CommandText = $"Select id as Id, weight as Weight , type as Type, send_code as SendCode, date as Date from products where  send_code = @param1;";
+                    command.CommandType = CommandType.Text;
+                    command.Parameters.Add(new SQLiteParameter("@param1", SendCode));
+                    DataSet dataSet = new DataSet();
+                    SQLiteDataAdapter adapter = new SQLiteDataAdapter(command);
+                    adapter.Fill(dataSet, "ProductsDgList");
+                    dgProducts.DataContext = dataSet;
+                    dgProducts.Items.Refresh();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+
+        private void PayProductsButtonClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if(Senderscmb.SelectedIndex > -1 && Recipientscmb.SelectedIndex > -1 && productsAddDate.Text!=string.Empty)
+                {
+                    string sendcode = sendCodeGenerator(SenderId, RecipientsId, Convert.ToDateTime(productsAddDate.Text).Month);
+                    var payment = new Payment(sendcode, CountDeliverCost(sendcode));
+                    payment.Show();
+                    
+                }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+            }
+        }
+
+        
+
+        private void TarifselectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if(MessageBox.Show("Are you want you edit the tarif for this clients", "Confrming", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    using(var connection = new SQLiteConnection(m_dbConnection))
+                    {
+                        string sendcode = sendCodeGenerator(SenderId, RecipientsId, Convert.ToDateTime(productsAddDate.Text).Month);
+                        var cmd = new SQLiteCommand(connection);
+                        cmd.CommandText = "UPDATE PRODUcTS SET TARIF_ID = @PARAM1 WHERE Send_Code = @PARAM2;";
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Parameters.Add(new SQLiteParameter("@PARAM1", tarifCmb.SelectedValue.ToString()));
+                        cmd.Parameters.Add(new SQLiteParameter("@PARAM2", sendcode));
+                        cmd.ExecuteNonQuery();
+                        CountDeliverCost(sendcode);
+                        MessageBox.Show("Changed!!");
+                    }
+                }
+                catch(Exception ex )
+                {
+                    MessageBox.Show(ex.Message, "error"); 
+                }
+            }
+        }
+        private string CountDeliverCost(string sendcode)
+        {
+            try
+            {
+                using(var connection = new SQLiteConnection(m_dbConnection))
+                {
+                    var cmd = new SQLiteCommand(connection);
+                    cmd.CommandText = "select (sum(products.Weight)*(select tarifs.Cost from tarifs where id = products.tarif_id)) as totalCost from products where send_code = @param1;";
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.Add(new SQLiteParameter("@param1", sendcode));
+                    string? totalCost = (string.IsNullOrEmpty( cmd.ExecuteScalar().ToString()))? "0" : cmd.ExecuteScalar().ToString();
+                    totalCostTxb.Text = "Total cost:" + totalCost + "€";
+                    return totalCost;
+                }
+            }
+            catch(Exception ex)
+            {
+
+                MessageBox.Show(ex.Message, "error");
+                return "0";
+            }
+        }
+        private bool IsPaid(string sendcode)
+        {
+            try
+            {
+                using(var connection = new SQLiteConnection(m_dbConnection)) 
+                { 
+                    var cmd = new SQLiteCommand(connection);
+                    cmd.CommandText = "Select count(id) from payments where sendcode = @p;";
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.Add(new SQLiteParameter("@p", sendcode));
+                    return Convert.ToBoolean(cmd.ExecuteScalar());
+                }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error");
+                return false;
+                
+            }
+        }
+
+        private void SettingsTabLoaded(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ValueChangedSlider(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            this.TextSizeSlider.Value = (double)(int)e.NewValue;
         }
     }
     
